@@ -97,9 +97,10 @@ async def run_judge(
         system=SYSTEM_PROMPT,
         user=user_prompt,
         model=model,
-        prefer="openai",
+        prefer="nvidia",
         temperature=0.1,
-        max_tokens=1500,
+        max_tokens=800,
+        timeout=60.0,
     )
 
     try:

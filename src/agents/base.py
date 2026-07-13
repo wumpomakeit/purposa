@@ -52,6 +52,7 @@ async def call_nvidia(
     model: str | None = None,
     temperature: float = 0.3,
     max_tokens: int = 2048,
+    timeout: float = 60.0,
 ) -> str:
     """Call NVIDIA NIM (OpenAI-compatible) endpoint."""
     settings = get_settings()
@@ -67,6 +68,7 @@ async def call_nvidia(
         ],
         temperature=temperature,
         max_tokens=max_tokens,
+        timeout=timeout,
     )
     return response.choices[0].message.content or ""
 
@@ -122,6 +124,7 @@ async def call_llm(
     model: str | None = None,
     temperature: float = 0.3,
     max_tokens: int = 2048,
+    timeout: float = 60.0,
 ) -> str:
     """
     Call an LLM. Priority order:
@@ -133,7 +136,7 @@ async def call_llm(
     provider = prefer or settings.llm_provider
 
     if provider == "nvidia" and settings.nvidia_api_key:
-        return await call_nvidia(system, user, model=model, temperature=temperature, max_tokens=max_tokens)
+        return await call_nvidia(system, user, model=model, temperature=temperature, max_tokens=max_tokens, timeout=timeout)
 
     if provider == "openai" and settings.openai_api_key:
         return await call_openai(system, user, model=model, temperature=temperature, max_tokens=max_tokens)
@@ -143,7 +146,7 @@ async def call_llm(
 
     # Fallback chain
     if settings.nvidia_api_key:
-        return await call_nvidia(system, user, model=model, temperature=temperature, max_tokens=max_tokens)
+        return await call_nvidia(system, user, model=model, temperature=temperature, max_tokens=max_tokens, timeout=timeout)
     if settings.openai_api_key:
         return await call_openai(system, user, model=model, temperature=temperature, max_tokens=max_tokens)
     if settings.anthropic_api_key:

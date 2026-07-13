@@ -34,7 +34,8 @@ async def run_summarizer(proposal: ProposalData, agent_idx: int = 0) -> AgentOut
         model=model,
         prefer=prefer,
         temperature=0.2,
-        max_tokens=1500,
+        max_tokens=800,
+        timeout=45.0,
     )
 
     # Try to parse JSON; fall back to raw text

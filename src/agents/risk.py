@@ -53,7 +53,8 @@ async def run_risk_assessor(proposal: ProposalData, agent_idx: int = 0) -> Agent
         model=model,
         prefer=prefer,
         temperature=0.2,
-        max_tokens=2000,
+        max_tokens=800,
+        timeout=45.0,
     )
 
     try:
