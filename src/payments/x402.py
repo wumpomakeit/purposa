@@ -95,15 +95,17 @@ async def verify_payment(request: Request) -> bool:
     Looks for Authorization header produced by:
       onchainos payment pay --payload <PAYMENT-REQUIRED value>
 
-    In development mode (no seller_address configured) payment verification
-    is bypassed with a warning log.
+    In development mode payment verification is bypassed (any Authorization
+    header is accepted) so the pipeline can be tested without a funded wallet.
+    In production, the onchainos CLI verifies the TEE-signed receipt.
     """
     settings = get_settings()
 
-    if not settings.seller_address:
+    # Development bypass — any Authorization header passes
+    if not settings.is_production:
         log.warning(
             "payment.bypass",
-            reason="SELLER_ADDRESS not configured — skipping payment verification",
+            reason="Development mode — payment verification skipped",
         )
         return True
 
@@ -111,10 +113,7 @@ async def verify_payment(request: Request) -> bool:
     if not auth_header:
         return False
 
-    # For a production implementation, verify the payment authorization
-    # against the onchainos TEE receipt using the CLI:
-    #   onchainos payment verify --authorization <header>
-    # Here we call the CLI and trust its exit code.
+    # Production: verify via onchainos CLI
     try:
         result = subprocess.run(
             [settings.onchainos_bin, "payment", "verify", "--authorization", auth_header],
@@ -130,8 +129,7 @@ async def verify_payment(request: Request) -> bool:
         return False
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
         log.error("payment.verify_error", error=str(e))
-        # In dev, allow through; in production, reject
-        return not settings.is_production
+        return False
 
 
 def _build_okx_env() -> dict[str, str]:

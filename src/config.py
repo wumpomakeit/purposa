@@ -25,10 +25,22 @@ class Settings(BaseSettings):
     # ── LLM providers ────────────────────────────────────────────────────
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     anthropic_api_key: str = Field(default="", alias="ANTHROPIC_API_KEY")
+    nvidia_api_key: str = Field(default="", alias="NVIDIA_API_KEY")
+    # Which provider to prefer: "nvidia" | "openai" | "anthropic"
+    llm_provider: str = Field(default="nvidia", alias="LLM_PROVIDER")
+    nvidia_base_url: str = Field(
+        default="https://integrate.api.nvidia.com/v1", alias="NVIDIA_BASE_URL"
+    )
     # Which models to use in the analysis ensemble
-    primary_model: str = Field(default="gpt-4o-mini", alias="PRIMARY_MODEL")
-    secondary_model: str = Field(default="gpt-4o", alias="SECONDARY_MODEL")
-    judge_model: str = Field(default="gpt-4o", alias="JUDGE_MODEL")
+    primary_model: str = Field(
+        default="meta/llama-3.1-70b-instruct", alias="PRIMARY_MODEL"
+    )
+    secondary_model: str = Field(
+        default="nvidia/llama-3.3-nemotron-super-49b-v1", alias="SECONDARY_MODEL"
+    )
+    judge_model: str = Field(
+        default="nvidia/llama-3.3-nemotron-super-49b-v1", alias="JUDGE_MODEL"
+    )
 
     # ── Service ───────────────────────────────────────────────────────────
     purposa_host: str = Field(default="0.0.0.0", alias="PURPOSA_HOST")
@@ -80,7 +92,7 @@ class Settings(BaseSettings):
 
     @property
     def has_llm_credentials(self) -> bool:
-        return bool(self.openai_api_key or self.anthropic_api_key)
+        return bool(self.openai_api_key or self.anthropic_api_key or self.nvidia_api_key)
 
     def write_onchainos_env(self) -> None:
         """Write OKX credentials to ~/.onchainos/.env for the CLI."""

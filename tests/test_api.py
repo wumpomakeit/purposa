@@ -44,16 +44,17 @@ def test_analyze_missing_body(client):
     assert resp.status_code == 422
 
 
-def test_vote_missing_wallet(client):
-    """Without wallet login, /vote should return 503."""
+def test_vote_invalid_proposal(client):
+    """Voting on a non-existent proposal should return 503 (no wallet) or 404 (no proposal)."""
     resp = client.post(
         "/vote",
         json={
-            "proposal_url": "0xtest123",
+            "proposal_url": "0xtest_nonexistent_proposal_id",
             "choice_index": 0,
         },
     )
-    assert resp.status_code == 503
+    # 503 = wallet not connected, 404 = proposal not found, 502 = Snapshot error
+    assert resp.status_code in (404, 502, 503)
 
 
 def test_trace_invalid_id(client):

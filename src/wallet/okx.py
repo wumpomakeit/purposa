@@ -69,30 +69,46 @@ def get_wallet_addresses() -> dict[str, Any]:
 
 
 def get_evm_address() -> str:
-    """Return the primary EVM address of the logged-in wallet."""
+    """Return the primary EVM address of the logged-in wallet.
+
+    onchainos wallet addresses returns:
+    {"ok": true, "data": {
+        "evm": [{"address": "0x...", "chainIndex": "1", "chainName": "eth"}, ...],
+        "xlayer": [{"address": "0x...", ...}],
+        "solana": [...]
+    }}
+    """
     try:
         raw = get_wallet_addresses()
-        # onchainos wallet addresses returns: {"ok": true, "data": {...}} or flat dict
         data = raw.get("data", raw) if isinstance(raw, dict) else {}
-        if isinstance(data, dict):
-            # Try common top-level keys
-            for key in ("evm", "evmAddress", "address"):
-                val = data.get(key)
-                if val and isinstance(val, str) and val.startswith("0x"):
-                    return val
-            # Try nested chain keys
-            for chain_key in ("xlayer", "ethereum", "base", "arbitrum"):
-                chain_data = data.get(chain_key)
-                if isinstance(chain_data, dict):
-                    addr = chain_data.get("address")
-                    if addr and isinstance(addr, str) and addr.startswith("0x"):
-                        return addr
-                elif isinstance(chain_data, str) and chain_data.startswith("0x"):
-                    return chain_data
-            # Last resort: first 0x... string in any value
-            for v in data.values():
-                if isinstance(v, str) and v.startswith("0x") and len(v) == 42:
-                    return v
+        if not isinstance(data, dict):
+            return ""
+
+        # Primary: first entry in evm array
+        evm_list = data.get("evm")
+        if isinstance(evm_list, list) and evm_list:
+            addr = evm_list[0].get("address", "")
+            if addr and addr.startswith("0x"):
+                return addr
+
+        # Fallback: xlayer array
+        xlayer_list = data.get("xlayer")
+        if isinstance(xlayer_list, list) and xlayer_list:
+            addr = xlayer_list[0].get("address", "")
+            if addr and addr.startswith("0x"):
+                return addr
+
+        # Legacy: flat dict with evmAddress / address key
+        for key in ("evmAddress", "address"):
+            val = data.get(key)
+            if val and isinstance(val, str) and val.startswith("0x"):
+                return val
+
+        # Last resort: first 0x... string value anywhere
+        for v in data.values():
+            if isinstance(v, str) and v.startswith("0x") and len(v) == 42:
+                return v
+
         return ""
     except Exception as e:
         log.warning("wallet.get_address_failed", error=str(e))

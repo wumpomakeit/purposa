@@ -17,6 +17,7 @@ from src.agents.risk import run_risk_assessor
 from src.agents.summarizer import run_summarizer
 from src.config import get_settings
 from src.snapshot.client import ProposalData
+from src.snapshot.social import fetch_social_sentiment, format_sentiment_context, get_token_symbol
 
 log = structlog.get_logger(__name__)
 
@@ -101,30 +102,77 @@ class AnalysisResult:
         }
 
 
+async def _fetch_social_enrichment(proposal: ProposalData) -> dict[str, Any]:
+    """Fetch OKX live social sentiment — non-critical, returns {} on failure."""
+    try:
+        token = get_token_symbol(proposal.space.id, proposal.space.symbol)
+        if not token:
+            return {}
+        sentiment = await asyncio.get_event_loop().run_in_executor(
+            None, fetch_social_sentiment, token
+        )
+        return sentiment
+    except Exception as e:
+        log.warning("pipeline.social_enrichment_failed", error=str(e))
+        return {}
+
+
 async def run_analysis_pipeline(
     proposal: ProposalData,
     proposal_url: str,
 ) -> AnalysisResult:
     """
     Run the full multi-agent analysis pipeline:
-    1. Summarizer + Critic + Risk Assessor run in parallel
-    2. Judge reconciles their outputs into a final verdict
+    1. Social enrichment (OKX live sentiment) + Summarizer + Critic + Risk Assessor run in parallel
+    2. Judge reconciles sub-agent outputs into a final verdict
+    3. Falls back to rule-based analysis if no LLM is available
     """
+    from src.config import get_settings
+
+    settings = get_settings()
     trace_id = str(uuid.uuid4())
     start = datetime.now(UTC)
-
     log.info("pipeline.start", trace_id=trace_id, proposal_id=proposal.id)
 
-    # Stage 1: parallel analysis
+    # Fetch OKX social sentiment in parallel with LLM agents (non-blocking)
+    social_task = asyncio.create_task(_fetch_social_enrichment(proposal))
+
+    if not settings.has_llm_credentials:
+        # Rule-based fallback — no LLM configured
+        log.warning("pipeline.mock_mode", reason="No LLM API key configured")
+        from src.agents.mock import generate_mock_analysis
+        mock = generate_mock_analysis(proposal)
+        social = await social_task
+        elapsed_ms = int((datetime.now(UTC) - start).total_seconds() * 1000)
+        result = _build_result_from_mock(
+            mock, proposal, proposal_url, trace_id, social, elapsed_ms
+        )
+        _save_trace(result)
+        return result
+
+    # Stage 1: parallel LLM analysis
     try:
-        summarizer_out, critic_out, risk_out = await asyncio.gather(
-            run_summarizer(proposal, agent_idx=0),
-            run_critic(proposal, agent_idx=0),
-            run_risk_assessor(proposal, agent_idx=0),
+        (summarizer_out, critic_out, risk_out), social = await asyncio.gather(
+            asyncio.gather(
+                run_summarizer(proposal, agent_idx=0),
+                run_critic(proposal, agent_idx=0),
+                run_risk_assessor(proposal, agent_idx=0),
+            ),
+            social_task,
         )
     except Exception as e:
+        # LLM call failed — fall back to rule-based
         log.error("pipeline.stage1.failed", error=str(e), trace_id=trace_id)
-        raise
+        social = await social_task
+        from src.agents.mock import generate_mock_analysis
+        mock = generate_mock_analysis(proposal)
+        mock["warnings"].insert(0, f"LLM pipeline failed ({type(e).__name__}: {e}). Rule-based fallback used.")
+        elapsed_ms = int((datetime.now(UTC) - start).total_seconds() * 1000)
+        result = _build_result_from_mock(
+            mock, proposal, proposal_url, trace_id, social, elapsed_ms
+        )
+        _save_trace(result)
+        return result
 
     log.info("pipeline.stage1.done", trace_id=trace_id)
 
@@ -148,6 +196,26 @@ async def run_analysis_pipeline(
         for out in [summarizer_out, critic_out, risk_out, judge_out]
     ]
 
+    # Add social enrichment to trace
+    if social:
+        agent_trace.append({
+            "agent_id": "okx-social",
+            "role": "social_enrichment",
+            "model": "OKX onchainos social API",
+            "content_preview": (
+                f"Token: {social.get('token')} | "
+                f"Sentiment: {social.get('sentiment_label')} | "
+                f"Mentions: {social.get('mention_count')} (24h)"
+            ),
+        })
+
+    warnings = judge_out.metadata.get("warnings", [])
+    if social and social.get("sentiment_label") == "bearish":
+        warnings.append(
+            f"⚠ OKX live social sentiment for {social['token']} is BEARISH "
+            f"({social['bearish_ratio']*100:.0f}% bearish, {social['mention_count']} mentions in 24h)"
+        )
+
     result = AnalysisResult(
         trace_id=trace_id,
         proposal_id=proposal.id,
@@ -165,7 +233,7 @@ async def run_analysis_pipeline(
         reasoning=judge_out.content,
         key_considerations=judge_out.metadata.get("key_considerations", []),
         dissenting_view=judge_out.metadata.get("dissenting_view", ""),
-        warnings=judge_out.metadata.get("warnings", []),
+        warnings=warnings,
         choices=proposal.choices,
         vote_state=proposal.state,
         scores_total=proposal.scores_total,
@@ -176,10 +244,73 @@ async def run_analysis_pipeline(
         elapsed_ms=elapsed_ms,
     )
 
-    # Persist trace
     _save_trace(result)
-
     return result
+
+
+def _build_result_from_mock(
+    mock: dict[str, Any],
+    proposal: ProposalData,
+    proposal_url: str,
+    trace_id: str,
+    social: dict[str, Any],
+    elapsed_ms: int,
+) -> AnalysisResult:
+    """Build an AnalysisResult from a mock/rule-based analysis dict."""
+    agent_trace: list[dict[str, Any]] = [
+        {
+            "agent_id": "rule-based-analyzer",
+            "role": "mock",
+            "model": "rule-based (no LLM)",
+            "content_preview": "Fact extraction + keyword matching on proposal text",
+        }
+    ]
+    if social:
+        agent_trace.append({
+            "agent_id": "okx-social",
+            "role": "social_enrichment",
+            "model": "OKX onchainos social API",
+            "content_preview": (
+                f"Token: {social.get('token')} | "
+                f"Sentiment: {social.get('sentiment_label')} | "
+                f"Mentions: {social.get('mention_count')} (24h)"
+            ),
+        })
+
+    warnings = list(mock.get("warnings", []))
+    if social and social.get("sentiment_label") == "bearish":
+        warnings.append(
+            f"⚠ OKX live social: {social['token']} is BEARISH "
+            f"({social['bearish_ratio']*100:.0f}% bearish, {social['mention_count']} mentions/24h)"
+        )
+
+    return AnalysisResult(
+        trace_id=trace_id,
+        proposal_id=proposal.id,
+        proposal_title=proposal.title,
+        proposal_url=proposal_url,
+        summary=mock["summary"],
+        tldr=mock["tldr"],
+        pros=mock["pros"],
+        cons=mock["cons"],
+        risk_flags=mock["risk_flags"],
+        overall_risk_level=mock["overall_risk_level"],
+        recommendation=mock["recommendation"],
+        recommended_choice_index=mock["recommended_choice_index"],
+        confidence=mock["confidence"],
+        reasoning=mock["reasoning"],
+        key_considerations=mock["key_considerations"],
+        dissenting_view=mock["dissenting_view"],
+        warnings=warnings,
+        choices=proposal.choices,
+        vote_state=proposal.state,
+        scores_total=proposal.scores_total,
+        quorum_percentage=proposal.quorum_percentage,
+        quorum_met=proposal.quorum_met,
+        votes_count=proposal.votes_count,
+        agent_trace=agent_trace,
+        elapsed_ms=elapsed_ms,
+    )
 
 
 def _save_trace(result: AnalysisResult) -> None:
