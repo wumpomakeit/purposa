@@ -1,2 +1,35 @@
+# credentials — never commit
 .env
+.env.local
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Traces (local storage)
+traces/
+
+# Node (for onchainos skill installs)
 node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log

@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Purposa — DAO Governance Analysis & Voting</title>
+  <meta name="description" content="Multi-agent DAO governance analysis. Four AI models cross-check every Snapshot proposal and hand you a clear verdict — summary, risks, recommendation — then let you vote in one click via OKX Agentic Wallet.">
+  <meta property="og:title" content="Purposa — Four agents. One verdict. Your call.">
+  <meta property="og:description" content="Stop guessing on governance. Purposa reads any Snapshot proposal through a 4-agent AI pipeline and gives you a clear, auditable verdict before you vote.">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── Custom properties ─────────────────────────────────── */
+:root {
+  --bg:        #0C0E16;
+  --bg-s:      #131828;
+  --bg-e:      #1a1f35;
+  --border:    rgba(255,255,255,.07);
+  --border-hi: rgba(99,130,255,.25);
+
+  --txt:       #EEF2FF;
+  --txt-2:     #8892A4;
+  --txt-3:     #4B5566;
+
+  --blue:      #2563EB;
+  --blue-l:    #3B82F6;
+  --purple:    #7C3AED;
+  --purple-l:  #8B5CF6;
+
+  --grad:        linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+  --grad-txt:    linear-gradient(135deg, #60A5FA 0%, #A78BFA 100%);
+  --grad-border: linear-gradient(135deg, rgba(37,99,235,.5) 0%, rgba(124,58,237,.5) 100%);
+
+  --green:  #10B981;
+  --amber:  #F59E0B;
+  --red:    #EF4444;
+
+  --ff-display: 'Syne', sans-serif;
+  --ff-body:    'Inter', sans-serif;
+  --ff-mono:    'JetBrains Mono', monospace;
+
+  --r:    12px;
+  --r-sm:  8px;
+  --r-lg: 20px;
+
+  --max: 1200px;
+  --nav-h: 68px;
+}
+
+/* ── Reset ─────────────────────────────────────────────── */
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--ff-body);
+  background: var(--bg);
+  color: var(--txt);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; display: block; }
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; border: none; background: none; }
+:focus-visible {
+  outline: 2px solid var(--blue-l);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+::selection { background: rgba(37,99,235,.35); }
+
+/* ── Typography ────────────────────────────────────────── */
+.display { font-family: var(--ff-display); }
+.mono    { font-family: var(--ff-mono); }
+.grad-text {
+  background: var(--grad-txt);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Layout ────────────────────────────────────────────── */
+.container { max-width: var(--max); margin: 0 auto; padding: 0 1.5rem; }
+.section    { padding: 6rem 0; }
+.section-sm { padding: 4rem 0; }
+
+/* ── Scroll-reveal ─────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity .6s ease, transform .6s ease;
+}
+.reveal.in {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/* NAVBAR                                                 */
+/* ═══════════════════════════════════════════════════════ */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  height: var(--nav-h);
+  display: flex;
+  align-items: center;
+  transition: background .3s, border-color .3s, backdrop-filter .3s;
+}
+.nav.scrolled {
+  background: rgba(12,14,22,.85);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.nav-inner {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  flex-shrink: 0;
+}
+.nav-logo-wrap {
+  width: 32px; height: 32px;
+  background: #fff;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.nav-logo-img { width: 28px; height: 28px; object-fit: contain; }
+.nav-logo-svg { width: 28px; height: 32px; }
+.nav-wordmark {
+  font-family: var(--ff-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: -.02em;
+  color: var(--txt);
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  list-style: none;
+  margin-left: auto;
+}
+.nav-links a {
+  padding: .5rem .9rem;
+  font-size: .875rem;
+  font-weight: 500;
+  color: var(--txt-2);
+  border-radius: var(--r-sm);
+  transition: color .2s;
+}
+.nav-links a:hover { color: var(--txt); }
+.nav-cta {
+  margin-left: 1rem;
+  padding: .5rem 1.2rem;
+  background: var(--grad);
+  border-radius: var(--r-sm);
+  font-size: .875rem;
+  font-weight: 600;
+  color: #fff !important;
+  transition: opacity .2s, box-shadow .2s;
+  white-space: nowrap;
+}
+.nav-cta:hover { opacity: .88; box-shadow: 0 0 20px rgba(37,99,235,.4); }
+.nav-menu-btn {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  margin-left: auto;
+  padding: 8px;
+}
+.nav-menu-btn span {
+  width: 22px; height: 2px;
+  background: var(--txt);
+  border-radius: 2px;
+  transition: .3s;
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/* HERO                                                   */
+/* ═══════════════════════════════════════════════════════ */
+.hero {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 4rem;
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: calc(var(--nav-h) + 4rem) 1.5rem 5rem;
+}
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--txt-2);
+  margin-bottom: 1.5rem;
+}
+.hero-eyebrow::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--grad);
+  flex-shrink: 0;
+}
+.hero h1 {
+  font-family: var(--ff-display);
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -.03em;
+  margin-bottom: 1.5rem;
+}
+.hero-sub {
+  font-size: 1.1rem;
+  color: var(--txt-2);
+  line-height: 1.7;
+  max-width: 480px;
+  margin-bottom: 2.5rem;
+}
+.hero-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .8rem 1.75rem;
+  background: var(--grad);
+  border-radius: var(--r-sm);
+  font-weight: 600;
+  font-size: .95rem;
+  color: #fff;
+  transition: opacity .2s, box-shadow .2s, transform .15s;
+}
+.btn-primary:hover {
+  opacity: .9;
+  box-shadow: 0 0 28px rgba(37,99,235,.45);
+  transform: translateY(-1px);
+}
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .8rem 1.4rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  font-weight: 500;
+  font-size: .95rem;
+  color: var(--txt-2);
+  transition: border-color .2s, color .2s;
+}
+.btn-secondary:hover { border-color: var(--border-hi); color: var(--txt); }
+
+/* ── Hero visual panel ──────────────────────────────── */
+.hero-visual {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 480px;
+  margin-left: auto;
+}
+/* Dot grid "noise" background */
+.hero-visual::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(99,130,255,.15) 1px, transparent 1px);
+  background-size: 24px 24px;
+  border-radius: var(--r-lg);
+  z-index: 0;
+}
+.hero-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+/* Connecting lines */
+.cl {
+  stroke-dasharray: 215;
+  stroke-dashoffset: 215;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cl1 { animation: drawLine .65s cubic-bezier(.4,0,.2,1) .75s forwards; }
+  .cl2 { animation: drawLine .65s cubic-bezier(.4,0,.2,1) .9s forwards; }
+  .cl3 { animation: drawLine .65s cubic-bezier(.4,0,.2,1) 1.05s forwards; }
+  .cl4 { animation: drawLine .65s cubic-bezier(.4,0,.2,1) 1.2s forwards; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cl { stroke-dashoffset: 0; }
+}
+@keyframes drawLine {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Agent nodes */
+.anode {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .4rem;
+  z-index: 2;
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .anode { animation: nodeIn .45s ease both; }
+  .anode:nth-child(1) { animation-delay: .2s; }
+  .anode:nth-child(2) { animation-delay: .35s; }
+  .anode:nth-child(3) { animation-delay: .5s; }
+  .anode:nth-child(4) { animation-delay: .65s; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .anode { opacity: 1; }
+}
+@keyframes nodeIn {
+  from { opacity: 0; transform: translate(var(--tx,0), var(--ty,0)) scale(.7); }
+  to   { opacity: 1; transform: translate(0,0) scale(1); }
+}
+.anode-tl { top:  8%; left:  6%; --tx: -10px; --ty: -10px; }
+.anode-tr { top:  8%; right: 6%; --tx:  10px; --ty: -10px; }
+.anode-bl { bottom: 8%; left:  6%; --tx: -10px; --ty:  10px; }
+.anode-br { bottom: 8%; right: 6%; --tx:  10px; --ty:  10px; }
+
+.anode-chip {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(37,99,235,.12);
+  border: 1px solid rgba(37,99,235,.35);
+  font-family: var(--ff-mono);
+  font-size: .85rem;
+  color: var(--blue-l);
+  box-shadow: 0 0 16px rgba(37,99,235,.15);
+}
+.anode-label {
+  font-size: .65rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--txt-2);
+  white-space: nowrap;
+}
+
+/* Verdict card (center) */
+.verdict-card-hero {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
+  width: min(256px, 55%);
+  z-index: 3;
+  background: var(--bg-s);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,.5), 0 0 0 1px rgba(99,130,255,.08);
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .verdict-card-hero { animation: cardIn .5s ease 1.35s forwards; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .verdict-card-hero { opacity: 1; }
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translate(-50%,-50%) scale(.92); }
+  to   { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+}
+.vc-header {
+  padding: .6rem .85rem;
+  background: var(--bg-e);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.vc-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(37,99,235,.5); }
+.vc-proposal-name {
+  font-size: .65rem;
+  font-weight: 600;
+  color: var(--txt-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--ff-mono);
+}
+.vc-body { padding: .85rem; }
+.vc-pipeline {
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+  margin-bottom: .7rem;
+  flex-wrap: wrap;
+}
+.vc-agent {
+  font-size: .55rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--blue-l);
+  padding: .15rem .35rem;
+  background: rgba(37,99,235,.1);
+  border-radius: 3px;
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .vc-agent:nth-child(1) { animation: fadeUp .3s ease 1.6s both; }
+  .vc-agent:nth-child(2) { animation: fadeUp .3s ease 1.7s both; }
+  .vc-agent:nth-child(3) { animation: fadeUp .3s ease 1.8s both; }
+  .vc-arrow { animation: fadeUp .3s ease 1.75s both; }
+  .vc-judge { animation: fadeUp .3s ease 1.9s both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vc-agent, .vc-arrow, .vc-judge { opacity: 1; }
+}
+.vc-arrow { font-size: .6rem; color: var(--txt-3); opacity: 0; }
+.vc-judge {
+  font-size: .55rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--purple-l);
+  padding: .15rem .35rem;
+  background: rgba(124,58,237,.12);
+  border-radius: 3px;
+  opacity: 0;
+}
+.vc-divider {
+  height: 1px;
+  background: var(--border);
+  margin: .6rem 0;
+}
+.vc-rec {
+  display: flex;
+  align-items: baseline;
+  gap: .5rem;
+  margin-bottom: .5rem;
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .vc-rec { animation: fadeUp .35s ease 2.0s both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vc-rec { opacity: 1; }
+}
+.vc-rec-label { font-size: .6rem; color: var(--txt-3); text-transform: uppercase; letter-spacing: .06em; }
+.vc-rec-val {
+  font-family: var(--ff-display);
+  font-size: .9rem;
+  font-weight: 800;
+  color: var(--green);
+  letter-spacing: .04em;
+}
+.vc-conf { margin-bottom: .6rem; opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .vc-conf { animation: fadeUp .35s ease 2.1s both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vc-conf { opacity: 1; }
+}
+.vc-conf-bar {
+  height: 4px;
+  background: rgba(255,255,255,.06);
+  border-radius: 2px;
+  margin-bottom: .25rem;
+  overflow: hidden;
+}
+.vc-conf-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--blue), var(--green));
+}
+@media (prefers-reduced-motion: no-preference) {
+  .vc-conf-fill { animation: fillBar .6s ease 2.15s both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vc-conf-fill { width: 78%; }
+}
+@keyframes fillBar {
+  from { width: 0; }
+  to   { width: 78%; }
+}
+.vc-conf-label { font-size: .6rem; color: var(--txt-3); font-family: var(--ff-mono); }
+.vc-flags { display: flex; flex-direction: column; gap: .3rem; }
+.vc-flag {
+  font-size: .6rem;
+  padding: .2rem .4rem;
+  border-radius: 4px;
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .vc-flag:nth-child(1) { animation: fadeUp .3s ease 2.25s both; }
+  .vc-flag:nth-child(2) { animation: fadeUp .3s ease 2.35s both; }
+  .vc-flag:nth-child(3) { animation: fadeUp .3s ease 2.45s both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vc-flag { opacity: 1; }
+}
+.vc-flag-amber { background: rgba(245,158,11,.12); color: #FCD34D; }
+.vc-flag-blue  { background: rgba(37,99,235,.12);  color: var(--blue-l); }
+.vc-flag-green { background: rgba(16,185,129,.12); color: #6EE7B7; }
+.vc-footer {
+  padding: .5rem .85rem;
+  background: var(--bg-e);
+  border-top: 1px solid var(--border);
+  font-size: .6rem;
+  color: var(--txt-3);
+  font-family: var(--ff-mono);
+  display: flex;
+  justify-content: space-between;
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .vc-footer { animation: fadeUp .3s ease 2.55s both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vc-footer { opacity: 1; }
+}
+
+/* Continuous glow pulse on verdict card */
+@media (prefers-reduced-motion: no-preference) {
+  .verdict-card-hero::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: calc(var(--r) + 1px);
+    background: transparent;
+    box-shadow: 0 0 0 1px transparent;
+    animation: cardGlow 3s ease 2.7s infinite alternate;
+    pointer-events: none;
+  }
+  @keyframes cardGlow {
+    from { box-shadow: 0 0 20px rgba(37,99,235,.12); }
+    to   { box-shadow: 0 0 32px rgba(124,58,237,.22); }
+  }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/* HOW IT WORKS                                           */
+/* ═══════════════════════════════════════════════════════ */
+.how { background: var(--bg-s); }
+.section-label {
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--blue-l);
+  margin-bottom: .75rem;
+}
+.section-title {
+  font-family: var(--ff-display);
+  font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+  font-weight: 700;
+  letter-spacing: -.025em;
+  line-height: 1.15;
+  margin-bottom: 1rem;
+}
+.section-sub {
+  font-size: 1.05rem;
+  color: var(--txt-2);
+  max-width: 520px;
+  margin-bottom: 3.5rem;
+}
+.flow-wrap { position: relative; }
+.flow-line-svg {
+  position: absolute;
+  top: 28px;
+  left: 0; right: 0;
+  height: 2px;
+  z-index: 0;
+  pointer-events: none;
+}
+.flow-line-svg line {
+  stroke: var(--border);
+  stroke-width: 2;
+  stroke-dasharray: 4 6;
+}
+.flow-steps {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.5rem;
+  position: relative;
+  z-index: 1;
+}
+.step-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.step-num-wrap {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  position: relative;
+  transition: border-color .3s, box-shadow .3s;
+  flex-shrink: 0;
+}
+.step-card:hover .step-num-wrap {
+  border-color: var(--blue);
+  box-shadow: 0 0 20px rgba(37,99,235,.3);
+}
+.step-num {
+  font-family: var(--ff-display);
+  font-weight: 800;
+  font-size: 1rem;
+  background: var(--grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.step-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+.step-title {
+  font-family: var(--ff-display);
+  font-size: .9rem;
+  font-weight: 700;
+  margin-bottom: .35rem;
+}
+.step-desc { font-size: .8rem; color: var(--txt-2); line-height: 1.55; }
+
+/* ═══════════════════════════════════════════════════════ */
+/* FEATURES                                               */
+/* ═══════════════════════════════════════════════════════ */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+.feat-card {
+  background: var(--bg-s);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 1.75rem;
+  transition: border-color .25s, box-shadow .25s;
+  position: relative;
+  overflow: hidden;
+}
+.feat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--grad);
+  opacity: 0;
+  transition: opacity .3s;
+}
+.feat-card:hover { border-color: var(--border-hi); }
+.feat-card:hover::before { opacity: 1; }
+.feat-icon {
+  width: 44px; height: 44px;
+  border-radius: var(--r-sm);
+  background: rgba(37,99,235,.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  margin-bottom: 1.1rem;
+}
+.feat-title {
+  font-family: var(--ff-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: .5rem;
+}
+.feat-desc { font-size: .875rem; color: var(--txt-2); line-height: 1.65; }
+/* Make last two cards span correctly */
+.features-grid .feat-card:nth-child(4),
+.features-grid .feat-card:nth-child(5) { }
+
+/* ═══════════════════════════════════════════════════════ */
+/* TECH STACK                                             */
+/* ═══════════════════════════════════════════════════════ */
+.tech { background: var(--bg-s); }
+.tech-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+.tech-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 1.25rem 1.4rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: border-color .25s;
+}
+.tech-card:hover { border-color: var(--border-hi); }
+.tech-badge {
+  width: 40px; height: 40px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .7rem;
+  font-weight: 800;
+  font-family: var(--ff-mono);
+  flex-shrink: 0;
+  letter-spacing: -.02em;
+}
+.tech-info { min-width: 0; }
+.tech-name { font-size: .9rem; font-weight: 600; margin-bottom: .2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tech-role { font-size: .75rem; color: var(--txt-2); }
+
+/* ═══════════════════════════════════════════════════════ */
+/* FAQ                                                    */
+/* ═══════════════════════════════════════════════════════ */
+.faq-list { max-width: 720px; display: flex; flex-direction: column; gap: .75rem; }
+.faq-item {
+  background: var(--bg-s);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.faq-q {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 1.4rem;
+  font-weight: 500;
+  font-size: .95rem;
+  color: var(--txt);
+  text-align: left;
+  cursor: pointer;
+  transition: background .2s;
+}
+.faq-q:hover { background: rgba(255,255,255,.03); }
+.faq-q[aria-expanded="true"] { color: var(--blue-l); }
+.faq-chevron {
+  width: 18px; height: 18px;
+  flex-shrink: 0;
+  transition: transform .3s ease;
+  color: var(--txt-2);
+}
+.faq-q[aria-expanded="true"] .faq-chevron { transform: rotate(180deg); color: var(--blue-l); }
+.faq-a {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .35s ease, padding .35s ease;
+  padding: 0 1.4rem;
+}
+.faq-a.open {
+  max-height: 400px;
+  padding: 0 1.4rem 1.2rem;
+}
+.faq-a p { font-size: .9rem; color: var(--txt-2); line-height: 1.7; }
+.faq-a p + p { margin-top: .75rem; }
+
+/* ═══════════════════════════════════════════════════════ */
+/* FOOTER                                                 */
+/* ═══════════════════════════════════════════════════════ */
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 3.5rem 0 2rem;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+.footer-brand p { font-size: .875rem; color: var(--txt-2); margin-top: .75rem; max-width: 260px; line-height: 1.65; }
+.footer-col h4 {
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--txt-3);
+  margin-bottom: 1rem;
+}
+.footer-col ul { list-style: none; display: flex; flex-direction: column; gap: .6rem; }
+.footer-col a { font-size: .875rem; color: var(--txt-2); transition: color .2s; }
+.footer-col a:hover { color: var(--txt); }
+.footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.footer-copy { font-size: .8rem; color: var(--txt-3); }
+.footer-disclaimer { font-size: .75rem; color: var(--txt-3); max-width: 440px; line-height: 1.5; }
+.hackathon-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .3rem .7rem;
+  border: 1px solid rgba(37,99,235,.3);
+  border-radius: 20px;
+  font-size: .7rem;
+  font-weight: 600;
+  color: var(--blue-l);
+  letter-spacing: .04em;
+}
+.hackathon-badge::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--blue-l);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .3; }
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/* MODALS                                                 */
+/* ═══════════════════════════════════════════════════════ */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s;
+}
+.modal-backdrop.open { opacity: 1; pointer-events: all; }
+.modal-box {
+  background: var(--bg-s);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  width: 100%;
+  max-width: 620px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 2rem;
+  transform: translateY(16px);
+  transition: transform .25s;
+}
+.modal-backdrop.open .modal-box { transform: none; }
+.modal-close {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: var(--txt-2);
+  transition: background .2s;
+}
+.modal-close:hover { background: rgba(255,255,255,.12); }
+.modal-box { position: relative; }
+.modal-box h2 {
+  font-family: var(--ff-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: .4rem;
+}
+.modal-meta { font-size: .8rem; color: var(--txt-3); margin-bottom: 1.5rem; font-family: var(--ff-mono); }
+.modal-box h3 { font-size: 1rem; font-weight: 600; margin: 1.25rem 0 .4rem; }
+.modal-box p { font-size: .875rem; color: var(--txt-2); line-height: 1.7; margin-bottom: .75rem; }
+.modal-box ul { padding-left: 1.2rem; margin-bottom: .75rem; }
+.modal-box li { font-size: .875rem; color: var(--txt-2); line-height: 1.7; }
+.modal-draft {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .3rem .8rem;
+  background: rgba(245,158,11,.1);
+  border: 1px solid rgba(245,158,11,.3);
+  border-radius: 20px;
+  font-size: .7rem;
+  font-weight: 700;
+  color: var(--amber);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/* RESPONSIVE                                             */
+/* ═══════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .features-grid { grid-template-columns: repeat(2, 1fr); }
+  .tech-grid { grid-template-columns: repeat(2, 1fr); }
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 2rem; }
+}
+@media (max-width: 768px) {
+  .hero {
+    grid-template-columns: 1fr;
+    padding-top: calc(var(--nav-h) + 3rem);
+    padding-bottom: 3rem;
+    gap: 3rem;
+  }
+  .hero-visual { max-width: 340px; margin: 0 auto; }
+  .hero h1 { font-size: 2.2rem; }
+  .flow-steps {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .flow-steps .step-card {
+    flex-direction: row;
+    text-align: left;
+    gap: 1.25rem;
+    padding: .8rem 0;
+    border-left: 2px dashed var(--border);
+    padding-left: 1.5rem;
+    margin-left: 27px;
+  }
+  .flow-steps .step-card:last-child { border-left-color: transparent; }
+  .step-num-wrap { margin-bottom: 0; margin-left: -38px; flex-shrink: 0; }
+  .flow-line-svg { display: none; }
+  .features-grid { grid-template-columns: 1fr; }
+  .tech-grid { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .footer-bottom { flex-direction: column; align-items: flex-start; }
+  .nav-links, .nav-cta { display: none; }
+  .nav-menu-btn { display: flex; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- NAVBAR                                                -->
+<!-- ══════════════════════════════════════════════════════ -->
+<nav class="nav" id="nav" role="navigation" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a class="nav-brand" href="/" aria-label="Purposa home">
+      <div class="nav-logo-wrap">
+        <img src="logo.png" alt="" width="28" height="28" class="nav-logo-img"
+             onerror="this.style.opacity=0">
+        <!-- SVG fallback (visible if logo.png absent) -->
+        <svg class="nav-logo-svg" viewBox="0 0 32 38" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="nG" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#3B82F6"/><stop offset="1" stop-color="#7C3AED"/></linearGradient>
+            <linearGradient id="nGs" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1E40AF"/><stop offset="1" stop-color="#5B21B6"/></linearGradient>
+          </defs>
+          <path fill-rule="evenodd" d="M3 3h20Q30 3 30 12Q30 21 22 24H11v10H3Z M11 10h9Q19 10 19 12Q19 16 15 18H11Z" fill="url(#nG)"/>
+          <path d="M3 28L11 28L11 33L7 38L3 33Z" fill="url(#nGs)"/>
+        </svg>
+      </div>
+      <span class="nav-wordmark">Purposa</span>
+    </a>
+
+    <ul class="nav-links" role="list">
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#tech">Tech</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <a href="/docs" class="nav-cta nav-links" target="_blank" rel="noopener">
+      Try the API →
+    </a>
+    <button class="nav-menu-btn" aria-label="Open menu" aria-expanded="false" id="menuBtn">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- HERO                                                  -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section id="hero" aria-labelledby="hero-h1">
+  <div class="hero">
+    <!-- Left: copy -->
+    <div class="hero-copy">
+      <div class="hero-eyebrow">OKX AI Genesis Hackathon · Agent Service Provider</div>
+      <h1 id="hero-h1" class="display">
+        Four agents.<br>One verdict.<br><span class="grad-text">Your call.</span>
+      </h1>
+      <p class="hero-sub">
+        Paste any Snapshot governance URL. Purposa runs it through a four-model AI pipeline —
+        Summarizer, Critic, Risk Assessor, and Judge — then hands you a clear recommendation,
+        a confidence score, and every piece of reasoning behind it. You decide.
+        One click votes through your OKX Agentic Wallet.
+      </p>
+      <div class="hero-actions">
+        <a href="/docs" class="btn-primary" target="_blank" rel="noopener">
+          Analyze a proposal
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a href="#how" class="btn-secondary">
+          How it works
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 2v10M3 8l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- Right: convergence animation -->
+    <div class="hero-visual" role="img" aria-label="Four AI agents — Summarizer, Critic, Risk Assessor, and Judge — converging their analysis into a single governance verdict card">
+
+      <!-- SVG connecting lines -->
+      <svg class="hero-svg" viewBox="0 0 460 460" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="lg1" gradientUnits="userSpaceOnUse" x1="72" y1="72" x2="230" y2="207"><stop stop-color="#3B82F6" stop-opacity=".7"/><stop offset="1" stop-color="#7C3AED" stop-opacity=".5"/></linearGradient>
+          <linearGradient id="lg2" gradientUnits="userSpaceOnUse" x1="388" y1="72" x2="230" y2="207"><stop stop-color="#3B82F6" stop-opacity=".7"/><stop offset="1" stop-color="#7C3AED" stop-opacity=".5"/></linearGradient>
+          <linearGradient id="lg3" gradientUnits="userSpaceOnUse" x1="72" y1="388" x2="230" y2="207"><stop stop-color="#7C3AED" stop-opacity=".5"/><stop offset="1" stop-color="#3B82F6" stop-opacity=".7"/></linearGradient>
+          <linearGradient id="lg4" gradientUnits="userSpaceOnUse" x1="388" y1="388" x2="230" y2="207"><stop stop-color="#7C3AED" stop-opacity=".5"/><stop offset="1" stop-color="#3B82F6" stop-opacity=".7"/></linearGradient>
+        </defs>
+        <line class="cl cl1" x1="72" y1="72"  x2="230" y2="207" stroke="url(#lg1)" stroke-width="1.5"/>
+        <line class="cl cl2" x1="388" y1="72"  x2="230" y2="207" stroke="url(#lg2)" stroke-width="1.5"/>
+        <line class="cl cl3" x1="72" y1="388" x2="230" y2="207" stroke="url(#lg3)" stroke-width="1.5"/>
+        <line class="cl cl4" x1="388" y1="388" x2="230" y2="207" stroke="url(#lg4)" stroke-width="1.5"/>
+      </svg>
+
+      <!-- Agent nodes -->
+      <div class="anode anode-tl">
+        <div class="anode-chip" title="Summarizer">Σ</div>
+        <span class="anode-label">Summarizer</span>
+      </div>
+      <div class="anode anode-tr">
+        <div class="anode-chip" title="Critic">⚖</div>
+        <span class="anode-label">Critic</span>
+      </div>
+      <div class="anode anode-bl">
+        <div class="anode-chip" title="Risk Assessor">⚑</div>
+        <span class="anode-label">Risk Assessor</span>
+      </div>
+      <div class="anode anode-br">
+        <div class="anode-chip" title="Judge">◈</div>
+        <span class="anode-label">Judge</span>
+      </div>
+
+      <!-- Central verdict card -->
+      <div class="verdict-card-hero" aria-live="polite">
+        <div class="vc-header">
+          <div class="vc-dot"></div>
+          <span class="vc-proposal-name mono">ENS: Workstream Q3 2025 Budget</span>
+        </div>
+        <div class="vc-body">
+          <div class="vc-pipeline">
+            <span class="vc-agent">Sum</span>
+            <span class="vc-arrow">·</span>
+            <span class="vc-agent">Critic</span>
+            <span class="vc-arrow">·</span>
+            <span class="vc-agent">Risk</span>
+            <span class="vc-arrow">→</span>
+            <span class="vc-judge">Judge</span>
+          </div>
+          <div class="vc-divider"></div>
+          <div class="vc-rec">
+            <span class="vc-rec-label">Verdict</span>
+            <span class="vc-rec-val">FOR</span>
+          </div>
+          <div class="vc-conf">
+            <div class="vc-conf-bar"><div class="vc-conf-fill"></div></div>
+            <span class="vc-conf-label mono">78% confidence</span>
+          </div>
+          <div class="vc-flags">
+            <span class="vc-flag vc-flag-amber">⚠ Low quorum risk (34%)</span>
+            <span class="vc-flag vc-flag-blue">Treasury: 450K USDC · 6 mo</span>
+            <span class="vc-flag vc-flag-green">✓ Community broadly aligned</span>
+          </div>
+        </div>
+        <div class="vc-footer">
+          <span>4 agents · 8.2s</span>
+          <span class="mono">trace: a3f8d2…</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- HOW IT WORKS                                          -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="how section" id="how" aria-labelledby="how-title">
+  <div class="container">
+    <p class="section-label reveal">How it works</p>
+    <h2 class="section-title display reveal" id="how-title" style="transition-delay:.08s">
+      From noisy proposal<br>to clear verdict in seconds
+    </h2>
+    <p class="section-sub reveal" style="transition-delay:.16s">
+      No reading forums. No second-guessing delegates. Just paste the link and get a verdict you can stand behind.
+    </p>
+
+    <div class="flow-wrap reveal" style="transition-delay:.22s">
+      <!-- Desktop connector line (hidden on mobile via CSS) -->
+      <svg class="flow-line-svg" aria-hidden="true" preserveAspectRatio="none">
+        <line x1="10%" y1="1" x2="90%" y2="1"/>
+      </svg>
+
+      <div class="flow-steps" role="list">
+        <div class="step-card reveal" style="transition-delay:.28s" role="listitem">
+          <div class="step-num-wrap">
+            <span class="step-num">1</span>
+          </div>
+          <p class="step-title">Paste the URL</p>
+          <p class="step-desc">Drop any Snapshot proposal link into the API or interface. Purposa pulls the full proposal body, vote tally, quorum data, and discussion links automatically.</p>
+        </div>
+
+        <div class="step-card reveal" style="transition-delay:.36s" role="listitem">
+          <div class="step-num-wrap">
+            <span class="step-num">2</span>
+          </div>
+          <p class="step-title">Four agents read it</p>
+          <p class="step-desc">Summarizer, Critic, Risk Assessor, and Judge each analyze the proposal independently and in parallel. No single model decides alone.</p>
+        </div>
+
+        <div class="step-card reveal" style="transition-delay:.44s" role="listitem">
+          <div class="step-num-wrap">
+            <span class="step-num">3</span>
+          </div>
+          <p class="step-title">Get a verdict</p>
+          <p class="step-desc">A recommendation (For / Against / Abstain), confidence score, risk flags, pros &amp; cons, and a full reasoning trace — every agent's logic visible and auditable.</p>
+        </div>
+
+        <div class="step-card reveal" style="transition-delay:.52s" role="listitem">
+          <div class="step-num-wrap">
+            <span class="step-num">4</span>
+          </div>
+          <p class="step-title">Pay per analysis</p>
+          <p class="step-desc">Each analysis is billed exactly via x402 using your OKX Agentic Wallet. No subscription. No idle charges. You pay for what you use, settled in stablecoin.</p>
+        </div>
+
+        <div class="step-card reveal" style="transition-delay:.6s" role="listitem">
+          <div class="step-num-wrap">
+            <span class="step-num">5</span>
+          </div>
+          <p class="step-title">Confirm &amp; vote</p>
+          <p class="step-desc">Agree with the verdict or override it — your choice. Confirm once. Purposa signs and submits the EIP-712 vote to Snapshot Hub on your behalf. Always requires your explicit approval.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- FEATURES                                              -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="section" id="features" aria-labelledby="feat-title">
+  <div class="container">
+    <p class="section-label reveal">What you get</p>
+    <h2 class="section-title display reveal" id="feat-title" style="transition-delay:.08s">
+      Every analysis.<br>Every time.
+    </h2>
+    <p class="section-sub reveal" style="transition-delay:.14s">
+      Not a summarizer that tells you what a proposal says.
+      A cross-checked panel that tells you whether you should vote for it — and exactly why.
+    </p>
+    <div class="features-grid">
+      <div class="feat-card reveal" style="transition-delay:.2s">
+        <div class="feat-icon">🤝</div>
+        <h3 class="feat-title display">Multi-Agent Cross-Check</h3>
+        <p class="feat-desc">Four models with different mandates analyze the same proposal independently. The Judge reconciles disagreements rather than averaging them — you see where agents differed and why the verdict landed where it did.</p>
+      </div>
+      <div class="feat-card reveal" style="transition-delay:.27s">
+        <div class="feat-icon">🔍</div>
+        <h3 class="feat-title display">Auditable Reasoning Trace</h3>
+        <p class="feat-desc">Every verdict is paired with a trace ID. Open it and read exactly what each agent said, what it flagged, and how the Judge resolved it. No black box verdicts — every recommendation is evidence-backed and reviewable.</p>
+      </div>
+      <div class="feat-card reveal" style="transition-delay:.34s">
+        <div class="feat-icon">⚑</div>
+        <h3 class="feat-title display">Risk Flag Detection</h3>
+        <p class="feat-desc">The Risk Assessor looks for treasury accountability gaps, insufficient discussion periods, quorum failure risk, vague scope, governance concentration, and proposer conflict of interest — and rates each flag by severity.</p>
+      </div>
+      <div class="feat-card reveal" style="transition-delay:.41s">
+        <div class="feat-icon">✅</div>
+        <h3 class="feat-title display">One-Click Vote Execution</h3>
+        <p class="feat-desc">Once you've reviewed the verdict, confirm your choice. Purposa signs the EIP-712 vote message inside the OKX Agentic Wallet's TEE and submits it to Snapshot Hub. The private key never leaves the enclave.</p>
+      </div>
+      <div class="feat-card reveal" style="transition-delay:.48s">
+        <div class="feat-icon">⚡</div>
+        <h3 class="feat-title display">Pay-Per-Call Pricing</h3>
+        <p class="feat-desc">Analysis is billed per proposal via x402 — the open agent payment protocol. Exact-scheme payment, settled in USD₮0 on X Layer. No subscription tier, no monthly commitment. Use it when you need it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- TECH STACK                                            -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="tech section" id="tech" aria-labelledby="tech-title">
+  <div class="container">
+    <p class="section-label reveal">Built on</p>
+    <h2 class="section-title display reveal" id="tech-title" style="transition-delay:.08s">
+      Trusted infrastructure,<br>not custom contracts
+    </h2>
+    <p class="section-sub reveal" style="transition-delay:.14s">
+      Purposa doesn't reinvent the wallet, the payment layer, or the vote standard.
+      It composes existing, audited infrastructure to do one thing well.
+    </p>
+    <div class="tech-grid">
+      <div class="tech-card reveal" style="transition-delay:.2s">
+        <div class="tech-badge" style="background:rgba(37,99,235,.15);color:#60A5FA">OKX</div>
+        <div class="tech-info">
+          <div class="tech-name">OKX Onchain OS</div>
+          <div class="tech-role">Skill runner · onchainos CLI v4.2.4</div>
+        </div>
+      </div>
+      <div class="tech-card reveal" style="transition-delay:.27s">
+        <div class="tech-badge" style="background:rgba(124,58,237,.15);color:#A78BFA">AW</div>
+        <div class="tech-info">
+          <div class="tech-name">OKX Agentic Wallet</div>
+          <div class="tech-role">TEE key storage · EIP-712 signing</div>
+        </div>
+      </div>
+      <div class="tech-card reveal" style="transition-delay:.34s">
+        <div class="tech-badge" style="background:rgba(16,185,129,.15);color:#6EE7B7">x402</div>
+        <div class="tech-info">
+          <div class="tech-name">okx-agent-payments-protocol</div>
+          <div class="tech-role">Exact-scheme pay-per-call billing</div>
+        </div>
+      </div>
+      <div class="tech-card reveal" style="transition-delay:.41s">
+        <div class="tech-badge" style="background:rgba(249,115,22,.15);color:#FB923C">SNP</div>
+        <div class="tech-info">
+          <div class="tech-name">Snapshot GraphQL API</div>
+          <div class="tech-role">Proposal data · vote submission</div>
+        </div>
+      </div>
+      <div class="tech-card reveal" style="transition-delay:.48s">
+        <div class="tech-badge" style="background:rgba(34,197,94,.15);color:#86EFAC">NV</div>
+        <div class="tech-info">
+          <div class="tech-name">NVIDIA NIM</div>
+          <div class="tech-role">Llama 3.1 70B · Llama 3.1 8B</div>
+        </div>
+      </div>
+      <div class="tech-card reveal" style="transition-delay:.55s">
+        <div class="tech-badge" style="background:rgba(20,184,166,.15);color:#5EEAD4">API</div>
+        <div class="tech-info">
+          <div class="tech-name">FastAPI · Python 3.12</div>
+          <div class="tech-role">HTTP service · async pipeline</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- FAQ                                                   -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="section" id="faq" aria-labelledby="faq-title">
+  <div class="container">
+    <p class="section-label reveal">Common questions</p>
+    <h2 class="section-title display reveal" id="faq-title" style="transition-delay:.08s">Things worth<br>knowing upfront</h2>
+
+    <div class="faq-list reveal" style="transition-delay:.16s" role="list">
+
+      <div class="faq-item" role="listitem">
+        <button class="faq-q" aria-expanded="false" aria-controls="faq1">
+          Which proposals does Purposa support right now?
+          <svg class="faq-chevron" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M4 7l5 5 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="faq-a" id="faq1" role="region">
+          <p>Currently, Purposa works with any active or closed proposal on <strong>Snapshot</strong> (snapshot.org). This covers most major DAOs — Uniswap, ENS, Arbitrum, Aave, Compound, Balancer, and hundreds of others that use Snapshot for off-chain governance.</p>
+          <p>On-chain governance platforms (Tally, Compound Governor Bravo, OpenZeppelin Governor) are the highest-priority v2 item. They're not supported yet because each requires handling different contract standards and gas estimation — complexity that doesn't belong in an MVP.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" role="listitem">
+        <button class="faq-q" aria-expanded="false" aria-controls="faq2">
+          How does billing work? What does an analysis cost?
+          <svg class="faq-chevron" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M4 7l5 5 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="faq-a" id="faq2" role="region">
+          <p>Each analysis is billed pay-per-call via the <strong>x402 protocol</strong> (exact scheme). The cost is fixed per call, deducted from your OKX Agentic Wallet in USD₮0 on X Layer. There is no subscription, no monthly fee, and no charge for browsing.</p>
+          <p>The payment amount is shown in the HTTP 402 response before you commit — you can inspect it, confirm, and pay using <code class="mono">onchainos payment pay</code>. Vote submission is not separately billed.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" role="listitem">
+        <button class="faq-q" aria-expanded="false" aria-controls="faq3">
+          Will Purposa ever vote on my behalf without asking me?
+          <svg class="faq-chevron" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M4 7l5 5 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="faq-a" id="faq3" role="region">
+          <p><strong>No. Never.</strong> Vote submission is always gated by your explicit confirmation. You must actively approve the choice before any signature is created or submitted. This is a deliberate design constraint, not a technical limitation.</p>
+          <p>Purposa is a research tool that hands you a verdict. What you do with that verdict is entirely your decision. Autonomous voting without human approval is something Purposa will not do in any version.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" role="listitem">
+        <button class="faq-q" aria-expanded="false" aria-controls="faq4">
+          What if the verdict turns out to be wrong?
+          <svg class="faq-chevron" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M4 7l5 5 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="faq-a" id="faq4" role="region">
+          <p>Purposa provides analysis and a recommendation — not a guarantee. The confidence score reflects agreement between agents, not certainty about the outcome. Governance results depend on political context, delegation dynamics, and late-breaking information that no model can fully anticipate.</p>
+          <p>Always read the reasoning trace before voting, especially on high-stakes proposals. Purposa is a research assistant, not a fiduciary. You remain responsible for your votes.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" role="listitem">
+        <button class="faq-q" aria-expanded="false" aria-controls="faq5">
+          Which wallets can I use?
+          <svg class="faq-chevron" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M4 7l5 5 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="faq-a" id="faq5" role="region">
+          <p>Currently, Purposa integrates with the <strong>OKX Agentic Wallet</strong> via the onchainos CLI for both payment and vote submission. The Agentic Wallet's private key is generated and stored inside a TEE — you authenticate via API key or email, and the key never leaves the enclave.</p>
+          <p>Support for other EIP-712-compatible wallets is planned but not yet implemented. For now, an OKX Agentic Wallet is required.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" role="listitem">
+        <button class="faq-q" aria-expanded="false" aria-controls="faq6">
+          How is my proposal data handled?
+          <svg class="faq-chevron" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M4 7l5 5 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="faq-a" id="faq6" role="region">
+          <p>Proposal text is fetched from Snapshot's public GraphQL API and passed through the LLM pipeline. Purposa stores the analysis result — summary, verdict, reasoning trace — keyed to a trace ID. No personally identifying information is stored.</p>
+          <p>Your wallet address is used only at vote submission time and is not logged against the analysis. Trace files are stored locally by default and are not shared with third parties.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" role="listitem">
+        <button class="faq-q" aria-expanded="false" aria-controls="faq7">
+          When will on-chain governance (Compound, Tally) be supported?
+          <svg class="faq-chevron" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M4 7l5 5 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="faq-a" id="faq7" role="region">
+          <p>It's the clearest next step and the highest-priority v2 item, but there's no firm date. On-chain governance requires handling multiple contract standards (Governor Bravo, OZ Governor, etc.), gas estimation, and transaction submission — complexity that's out of scope for an MVP that needs to demonstrate the core value proposition first.</p>
+          <p>Snapshot currently covers the majority of active DAO governance volume, including Uniswap, ENS, Arbitrum, and Aave — so the MVP is not a thin edge case.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- FOOTER                                                -->
+<!-- ══════════════════════════════════════════════════════ -->
+<footer class="footer" aria-label="Site footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="nav-brand" href="/" aria-label="Purposa home" style="display:inline-flex">
+          <div class="nav-logo-wrap">
+            <img src="logo.png" alt="" width="28" height="28" class="nav-logo-img" onerror="this.style.opacity=0">
+            <svg class="nav-logo-svg" viewBox="0 0 32 38" fill="none" aria-hidden="true">
+              <defs><linearGradient id="fG" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#3B82F6"/><stop offset="1" stop-color="#7C3AED"/></linearGradient><linearGradient id="fGs" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1E40AF"/><stop offset="1" stop-color="#5B21B6"/></linearGradient></defs>
+              <path fill-rule="evenodd" d="M3 3h20Q30 3 30 12Q30 21 22 24H11v10H3Z M11 10h9Q19 10 19 12Q19 16 15 18H11Z" fill="url(#fG)"/>
+              <path d="M3 28L11 28L11 33L7 38L3 33Z" fill="url(#fGs)"/>
+            </svg>
+          </div>
+          <span class="nav-wordmark">Purposa</span>
+        </a>
+        <p>Multi-agent DAO governance analysis and voting. Built for the OKX AI Genesis Hackathon — Agent Service Provider track.</p>
+        <div style="margin-top:1rem">
+          <span class="hackathon-badge">OKX AI Genesis 2026</span>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#tech">Tech stack</a></li>
+          <li><a href="/docs" target="_blank" rel="noopener">API docs</a></li>
+          <li><a href="/health" target="_blank" rel="noopener">Service status</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="https://github.com/wumpomakeit/purposa" target="_blank" rel="noopener">GitHub</a></li>
+          <li><a href="https://snapshot.org" target="_blank" rel="noopener">Snapshot</a></li>
+          <li><a href="https://web3.okx.com/onchainos" target="_blank" rel="noopener">OKX Onchain OS</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="#" class="modal-trigger" data-modal="privacy">Privacy Policy</a></li>
+          <li><a href="#" class="modal-trigger" data-modal="terms">Terms of Use</a></li>
+          <li><a href="#" class="modal-trigger" data-modal="disclaimer">Disclaimer</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span class="footer-copy">© 2026 Purposa. MIT License.</span>
+      <span class="footer-disclaimer">
+        Purposa is a research tool. Nothing here constitutes financial or investment advice.
+        Governance outcomes depend on factors beyond any model's knowledge.
+        Always read proposals before voting.
+      </span>
+    </div>
+  </div>
+</footer>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- MODALS — Legal                                        -->
+<!-- ══════════════════════════════════════════════════════ -->
+
+<!-- Privacy Policy -->
+<div class="modal-backdrop" id="modal-privacy" role="dialog" aria-modal="true" aria-labelledby="priv-title">
+  <div class="modal-box">
+    <button class="modal-close modal-close-btn" aria-label="Close">✕</button>
+    <div class="modal-draft">Draft · Template · Not Legal Advice</div>
+    <h2 id="priv-title" class="display">Privacy Policy</h2>
+    <p class="modal-meta mono">Last updated: July 2026 · Version 0.1 (draft)</p>
+    <h3>What we collect</h3>
+    <p>Purposa fetches proposal data from Snapshot's public GraphQL API on your behalf. We store the analysis result (summary, verdict, reasoning trace) indexed by a randomly generated trace ID. We do not collect your name, email, or any personally identifying information.</p>
+    <h3>Wallet addresses</h3>
+    <p>Your wallet address is used only to submit votes to Snapshot Hub when you explicitly confirm a vote. It is not stored alongside analysis records or used for any other purpose.</p>
+    <h3>LLM providers</h3>
+    <p>Proposal text is passed to NVIDIA NIM (hosted LLM API) for analysis. NVIDIA's data handling policies apply to data transmitted to their API. We do not send wallet addresses or personal information to LLM providers.</p>
+    <h3>Trace storage</h3>
+    <p>Analysis traces are stored locally on the server by default. They contain the proposal ID, the verdict, and agent reasoning. They do not contain your wallet address or payment information.</p>
+    <h3>Cookies & tracking</h3>
+    <p>Purposa does not use cookies, analytics trackers, or third-party tracking scripts on this page.</p>
+    <h3>Contact</h3>
+    <p>For privacy questions, open an issue on the <a href="https://github.com/wumpomakeit/purposa" target="_blank" rel="noopener" style="color:var(--blue-l)">GitHub repository</a>.</p>
+  </div>
+</div>
+
+<!-- Terms of Use -->
+<div class="modal-backdrop" id="modal-terms" role="dialog" aria-modal="true" aria-labelledby="terms-title">
+  <div class="modal-box">
+    <button class="modal-close modal-close-btn" aria-label="Close">✕</button>
+    <div class="modal-draft">Draft · Template · Not Legal Advice</div>
+    <h2 id="terms-title" class="display">Terms of Use</h2>
+    <p class="modal-meta mono">Last updated: July 2026 · Version 0.1 (draft)</p>
+    <h3>Use of the service</h3>
+    <p>Purposa provides governance analysis as an informational tool. By using this service you agree that you are solely responsible for any votes you cast, regardless of the recommendation provided.</p>
+    <h3>No financial advice</h3>
+    <p>Nothing produced by Purposa constitutes financial, investment, legal, or governance advice. Recommendations are outputs of AI models and should be treated as one input among many, not as authoritative guidance.</p>
+    <h3>Payment</h3>
+    <p>Analysis calls are billed per use via the x402 protocol. Payments are final once submitted to the network. Purposa does not offer refunds for completed analyses.</p>
+    <h3>Voting</h3>
+    <p>You are solely responsible for votes submitted through Purposa. Purposa never submits a vote without your explicit confirmation. On-chain actions are irreversible.</p>
+    <h3>Availability</h3>
+    <p>Purposa is provided as-is, without warranties of availability, accuracy, or fitness for a particular purpose. The service may be interrupted, modified, or discontinued at any time.</p>
+    <h3>Governing law</h3>
+    <p>These terms are governed by the laws of the jurisdiction of the operator. Disputes shall be resolved through binding arbitration or in the courts of the applicable jurisdiction.</p>
+  </div>
+</div>
+
+<!-- Disclaimer -->
+<div class="modal-backdrop" id="modal-disclaimer" role="dialog" aria-modal="true" aria-labelledby="disc-title">
+  <div class="modal-box">
+    <button class="modal-close modal-close-btn" aria-label="Close">✕</button>
+    <div class="modal-draft">Draft · Template · Not Legal Advice</div>
+    <h2 id="disc-title" class="display">Disclaimer</h2>
+    <p class="modal-meta mono">Last updated: July 2026 · Version 0.1 (draft)</p>
+    <p><strong>Purposa is an experimental tool built for the OKX AI Genesis Hackathon.</strong> It is not production-ready software, does not carry any regulatory approval, and should not be used as the sole basis for governance decisions involving material financial stakes.</p>
+    <h3>Model limitations</h3>
+    <p>AI models can hallucinate, misread context, miss nuance in governance forum discussions, and produce confident-sounding but incorrect analysis. The confidence score reflects inter-agent agreement, not factual accuracy.</p>
+    <h3>No warranty</h3>
+    <p>THE SERVICE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF THIS SOFTWARE.</p>
+    <h3>Third-party services</h3>
+    <p>Purposa relies on Snapshot's public API, NVIDIA NIM inference, and OKX Onchain OS. The accuracy, availability, and policies of those services are outside Purposa's control.</p>
+    <h3>Not a delegate</h3>
+    <p>Purposa is not a governance delegate, does not hold voting power on any protocol, and has no financial interest in any proposal's outcome.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SCRIPT                                                -->
+<!-- ══════════════════════════════════════════════════════ -->
+<script>
+(function () {
+  'use strict';
+
+  /* ── Navbar scroll class ─────────────────────────── */
+  var nav = document.getElementById('nav');
+  var onScroll = function () {
+    nav.classList.toggle('scrolled', window.scrollY > 20);
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* ── Scroll reveal (IntersectionObserver) ─────────── */
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduceMotion) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+  } else {
+    document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('in'); });
+  }
+
+  /* ── FAQ accordion ─────────────────────────────────── */
+  document.querySelectorAll('.faq-q').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var expanded = btn.getAttribute('aria-expanded') === 'true';
+      /* Close all others */
+      document.querySelectorAll('.faq-q').forEach(function (b) {
+        b.setAttribute('aria-expanded', 'false');
+        var a = document.getElementById(b.getAttribute('aria-controls'));
+        if (a) a.classList.remove('open');
+      });
+      if (!expanded) {
+        btn.setAttribute('aria-expanded', 'true');
+        var ans = document.getElementById(btn.getAttribute('aria-controls'));
+        if (ans) ans.classList.add('open');
+      }
+    });
+  });
+
+  /* ── Modals ────────────────────────────────────────── */
+  function openModal(id) {
+    var m = document.getElementById('modal-' + id);
+    if (!m) return;
+    m.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    var close = m.querySelector('.modal-close-btn');
+    if (close) close.focus();
+  }
+  function closeModal(m) {
+    m.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.querySelectorAll('.modal-trigger').forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      openModal(link.getAttribute('data-modal'));
+    });
+  });
+  document.querySelectorAll('.modal-close-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () { closeModal(btn.closest('.modal-backdrop')); });
+  });
+  document.querySelectorAll('.modal-backdrop').forEach(function (m) {
+    m.addEventListener('click', function (e) {
+      if (e.target === m) closeModal(m);
+    });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-backdrop.open').forEach(closeModal);
+    }
+  });
+
+  /* ── Mobile menu (minimal toggle) ─────────────────── */
+  var menuBtn = document.getElementById('menuBtn');
+  if (menuBtn) {
+    menuBtn.addEventListener('click', function () {
+      /* On mobile, scroll to #how as a simple fallback */
+      document.getElementById('how') && document.getElementById('how').scrollIntoView({ behavior: 'smooth' });
+    });
+  }
+
+  /* ── Stagger reveal delays for children ────────────── */
+  /* Already set via inline style="transition-delay" */
+
+})();
+</script>
+</body>
+</html>
