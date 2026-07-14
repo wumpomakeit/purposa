@@ -29,19 +29,27 @@ def _make_nvidia_client():
 
 
 def _make_openai_client():
+    """Fallback: standard OpenAI endpoint, key from env (not in Settings)."""
+    import os
     try:
         from openai import AsyncOpenAI
-        settings = get_settings()
-        return AsyncOpenAI(api_key=settings.openai_api_key)
+        key = os.environ.get("OPENAI_API_KEY", "")
+        if not key:
+            return None
+        return AsyncOpenAI(api_key=key)
     except ImportError:
         return None
 
 
 def _make_anthropic_client():
+    """Fallback: Anthropic, key from env (not in Settings)."""
+    import os
     try:
         import anthropic
-        settings = get_settings()
-        return anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+        key = os.environ.get("ANTHROPIC_API_KEY", "")
+        if not key:
+            return None
+        return anthropic.AsyncAnthropic(api_key=key)
     except ImportError:
         return None
 
@@ -138,20 +146,21 @@ async def call_llm(
     if provider == "nvidia" and settings.nvidia_api_key:
         return await call_nvidia(system, user, model=model, temperature=temperature, max_tokens=max_tokens, timeout=timeout)
 
-    if provider == "openai" and settings.openai_api_key:
+    import os
+    if provider == "openai" and os.environ.get("OPENAI_API_KEY"):
         return await call_openai(system, user, model=model, temperature=temperature, max_tokens=max_tokens)
 
-    if provider == "anthropic" and settings.anthropic_api_key:
+    if provider == "anthropic" and os.environ.get("ANTHROPIC_API_KEY"):
         return await call_anthropic(system, user, temperature=temperature, max_tokens=max_tokens)
 
-    # Fallback chain
+    # Fallback chain: nvidia → openai → anthropic
     if settings.nvidia_api_key:
         return await call_nvidia(system, user, model=model, temperature=temperature, max_tokens=max_tokens, timeout=timeout)
-    if settings.openai_api_key:
+    if os.environ.get("OPENAI_API_KEY"):
         return await call_openai(system, user, model=model, temperature=temperature, max_tokens=max_tokens)
-    if settings.anthropic_api_key:
+    if os.environ.get("ANTHROPIC_API_KEY"):
         return await call_anthropic(system, user, temperature=temperature, max_tokens=max_tokens)
 
     raise RuntimeError(
-        "No LLM API key configured. Set NVIDIA_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY in .env"
+        "No LLM API key configured. Set NVIDIA_API_KEY in .env"
     )

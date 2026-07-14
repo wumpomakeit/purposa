@@ -45,7 +45,7 @@ If there are no meaningful risks, say so explicitly."""
 async def run_risk_assessor(proposal: ProposalData, agent_idx: int = 0) -> AgentOutput:
     settings = get_settings()
     model = settings.primary_model
-    prefer = "openai"
+    prefer = "nvidia"
 
     raw = await call_llm(
         system=SYSTEM_PROMPT,
