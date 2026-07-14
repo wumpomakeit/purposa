@@ -136,14 +136,23 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   width: 32px; height: 32px;
   background: #fff;
   border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
   overflow: hidden;
   flex-shrink: 0;
 }
-.nav-logo-img { width: 28px; height: 28px; object-fit: contain; }
-.nav-logo-svg { width: 28px; height: 32px; }
+.nav-logo-img {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 26px; height: 26px;
+  object-fit: contain;
+}
+.nav-logo-svg {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 22px; height: 26px;
+}
 .nav-wordmark {
   font-family: var(--ff-display);
   font-weight: 700;
@@ -185,12 +194,68 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   gap: 5px;
   margin-left: auto;
   padding: 8px;
+  position: relative;
+  z-index: 101;
 }
 .nav-menu-btn span {
   width: 22px; height: 2px;
   background: var(--txt);
   border-radius: 2px;
-  transition: .3s;
+  transition: transform .3s, opacity .3s;
+  transform-origin: center;
+}
+.nav-menu-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-menu-btn.open span:nth-child(2) { opacity: 0; }
+.nav-menu-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ── Mobile menu panel ─────────────────────────────────── */
+.mobile-menu {
+  position: fixed;
+  top: var(--nav-h);
+  left: 0; right: 0;
+  z-index: 99;
+  background: rgba(12,14,22,.97);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transition: max-height .3s ease, opacity .25s ease;
+}
+.mobile-menu.open {
+  max-height: calc(100vh - var(--nav-h));
+  overflow-y: auto;
+  opacity: 1;
+  visibility: visible;
+}
+.mobile-menu-inner {
+  padding: .75rem 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+}
+.mobile-menu-link {
+  padding: .95rem .1rem;
+  font-size: 1.02rem;
+  font-weight: 500;
+  color: var(--txt-2);
+  border-bottom: 1px solid var(--border);
+  transition: color .2s;
+}
+.mobile-menu-link:hover, .mobile-menu-link:active { color: var(--txt); }
+.mobile-menu-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  margin-top: 1.25rem;
+  padding: .85rem 1.4rem;
+  background: var(--grad);
+  border-radius: var(--r-sm);
+  font-size: .95rem;
+  font-weight: 600;
+  color: #fff !important;
 }
 
 /* ═══════════════════════════════════════════════════════ */
@@ -205,24 +270,6 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   max-width: var(--max);
   margin: 0 auto;
   padding: calc(var(--nav-h) + 4rem) 1.5rem 5rem;
-}
-.hero-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
-  font-size: .75rem;
-  font-weight: 600;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--txt-2);
-  margin-bottom: 1.5rem;
-}
-.hero-eyebrow::before {
-  content: '';
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--grad);
-  flex-shrink: 0;
 }
 .hero h1 {
   font-family: var(--ff-display);
@@ -829,29 +876,6 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 }
 .footer-copy { font-size: .8rem; color: var(--txt-3); }
 .footer-disclaimer { font-size: .75rem; color: var(--txt-3); max-width: 440px; line-height: 1.5; }
-.hackathon-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
-  padding: .3rem .7rem;
-  border: 1px solid rgba(37,99,235,.3);
-  border-radius: 20px;
-  font-size: .7rem;
-  font-weight: 600;
-  color: var(--blue-l);
-  letter-spacing: .04em;
-}
-.hackathon-badge::before {
-  content: '';
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--blue-l);
-  animation: pulse 2s infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: .3; }
-}
 
 /* ═══════════════════════════════════════════════════════ */
 /* MODALS                                                 */
@@ -997,17 +1021,29 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
     <ul class="nav-links" role="list">
       <li><a href="#how">How it works</a></li>
       <li><a href="#features">Features</a></li>
-      <li><a href="#tech">Tech</a></li>
+      <li><a href="#tech">Tech stack</a></li>
       <li><a href="#faq">FAQ</a></li>
     </ul>
     <a href="/docs" class="nav-cta nav-links" target="_blank" rel="noopener">
       Try the API →
     </a>
-    <button class="nav-menu-btn" aria-label="Open menu" aria-expanded="false" id="menuBtn">
+    <button class="nav-menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu" id="menuBtn">
       <span></span><span></span><span></span>
     </button>
   </div>
 </nav>
+
+<div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="false" aria-label="Mobile navigation">
+  <div class="mobile-menu-inner">
+    <a href="#how" class="mobile-menu-link">How it works</a>
+    <a href="#features" class="mobile-menu-link">Features</a>
+    <a href="#tech" class="mobile-menu-link">Tech stack</a>
+    <a href="#faq" class="mobile-menu-link">FAQ</a>
+    <a href="/docs" class="mobile-menu-cta" target="_blank" rel="noopener">
+      Try the API →
+    </a>
+  </div>
+</div>
 
 <!-- ══════════════════════════════════════════════════════ -->
 <!-- HERO                                                  -->
@@ -1016,9 +1052,8 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   <div class="hero">
     <!-- Left: copy -->
     <div class="hero-copy">
-      <div class="hero-eyebrow">OKX AI Genesis Hackathon · Agent Service Provider</div>
       <h1 id="hero-h1" class="display">
-        Four agents.<br>One verdict.<br><span class="grad-text">Your call.</span>
+        Read less.<br><span class="grad-text">Decide better.</span>
       </h1>
       <p class="hero-sub">
         Paste any Snapshot governance URL. Purposa runs it through a four-model AI pipeline —
@@ -1389,10 +1424,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
           </div>
           <span class="nav-wordmark">Purposa</span>
         </a>
-        <p>Multi-agent DAO governance analysis and voting. Built for the OKX AI Genesis Hackathon — Agent Service Provider track.</p>
-        <div style="margin-top:1rem">
-          <span class="hackathon-badge">OKX AI Genesis 2026</span>
-        </div>
+        <p>Multi-agent AI analysis for DAO governance proposals, with one-click voting through your OKX Agentic Wallet.</p>
       </div>
 
       <div class="footer-col">
@@ -1586,12 +1618,37 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
     }
   });
 
-  /* ── Mobile menu (minimal toggle) ─────────────────── */
+  /* ── Mobile menu ───────────────────────────────────── */
   var menuBtn = document.getElementById('menuBtn');
-  if (menuBtn) {
+  var mobileMenu = document.getElementById('mobileMenu');
+  if (menuBtn && mobileMenu) {
+    var closeMenu = function () {
+      menuBtn.classList.remove('open');
+      menuBtn.setAttribute('aria-expanded', 'false');
+      menuBtn.setAttribute('aria-label', 'Open menu');
+      mobileMenu.classList.remove('open');
+    };
+    var openMenu = function () {
+      menuBtn.classList.add('open');
+      menuBtn.setAttribute('aria-expanded', 'true');
+      menuBtn.setAttribute('aria-label', 'Close menu');
+      mobileMenu.classList.add('open');
+    };
     menuBtn.addEventListener('click', function () {
-      /* On mobile, scroll to #how as a simple fallback */
-      document.getElementById('how') && document.getElementById('how').scrollIntoView({ behavior: 'smooth' });
+      if (mobileMenu.classList.contains('open')) {
+        closeMenu();
+      } else {
+        openMenu();
+      }
+    });
+    mobileMenu.querySelectorAll('a').forEach(function (link) {
+      link.addEventListener('click', function () { closeMenu(); });
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeMenu();
+    });
+    window.addEventListener('resize', function () {
+      if (window.innerWidth > 768) closeMenu();
     });
   }
 
