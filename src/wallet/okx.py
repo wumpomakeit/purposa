@@ -173,6 +173,8 @@ def sign_eip712_vote(
         "sign-message",
         "--type", "eip712",
         "--message", typed_data_json,
+        "--chain", "ethereum",
+        "--from", voter_address,
         timeout=60,
     )
 
