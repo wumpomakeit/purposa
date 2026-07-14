@@ -37,7 +37,7 @@ async def run_critic(proposal: ProposalData, agent_idx: int = 0) -> AgentOutput:
     settings = get_settings()
     # Use a different model for the second critic to get diversity
     model = settings.secondary_model if agent_idx == 0 else settings.primary_model
-    prefer = "openai"
+    prefer = "nvidia"
 
     raw = await call_llm(
         system=SYSTEM_PROMPT,

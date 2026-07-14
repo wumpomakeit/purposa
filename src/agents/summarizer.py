@@ -26,7 +26,7 @@ is a token holder who hasn't read governance forums."""
 async def run_summarizer(proposal: ProposalData, agent_idx: int = 0) -> AgentOutput:
     settings = get_settings()
     model = settings.primary_model if agent_idx == 0 else settings.secondary_model
-    prefer = "openai"
+    prefer = "nvidia"
 
     raw = await call_llm(
         system=SYSTEM_PROMPT,

@@ -22,25 +22,26 @@ class Settings(BaseSettings):
     okx_secret_key: str = Field(default="", alias="OKX_SECRET_KEY")
     okx_passphrase: str = Field(default="", alias="OKX_PASSPHRASE")
 
-    # ── LLM providers ────────────────────────────────────────────────────
-    openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
-    anthropic_api_key: str = Field(default="", alias="ANTHROPIC_API_KEY")
+    # ── LLM provider: NVIDIA NIM (primary) ───────────────────────────────
     nvidia_api_key: str = Field(default="", alias="NVIDIA_API_KEY")
-    # Which provider to prefer: "nvidia" | "openai" | "anthropic"
-    llm_provider: str = Field(default="nvidia", alias="LLM_PROVIDER")
     nvidia_base_url: str = Field(
         default="https://integrate.api.nvidia.com/v1", alias="NVIDIA_BASE_URL"
     )
-    # Which models to use in the analysis ensemble
+    llm_provider: str = Field(default="nvidia", alias="LLM_PROVIDER")
+    # Models: 8B for parallel agents (fast), 70B for judge (quality)
     primary_model: str = Field(
-        default="meta/llama-3.1-70b-instruct", alias="PRIMARY_MODEL"
+        default="meta/llama-3.1-8b-instruct", alias="PRIMARY_MODEL"
     )
     secondary_model: str = Field(
-        default="nvidia/llama-3.3-nemotron-super-49b-v1", alias="SECONDARY_MODEL"
+        default="meta/llama-3.1-8b-instruct", alias="SECONDARY_MODEL"
     )
     judge_model: str = Field(
-        default="nvidia/llama-3.3-nemotron-super-49b-v1", alias="JUDGE_MODEL"
+        default="meta/llama-3.1-70b-instruct", alias="JUDGE_MODEL"
     )
+    # openai_api_key / anthropic_api_key are intentionally NOT declared as
+    # Pydantic fields — they are read directly from os.environ in base.py
+    # only when NVIDIA_API_KEY is absent. This keeps them invisible to
+    # Railway's variable scanner, which reads Field(alias=...) declarations.
 
     # ── Service ───────────────────────────────────────────────────────────
     purposa_host: str = Field(default="0.0.0.0", alias="PURPOSA_HOST")
@@ -92,7 +93,12 @@ class Settings(BaseSettings):
 
     @property
     def has_llm_credentials(self) -> bool:
-        return bool(self.openai_api_key or self.anthropic_api_key or self.nvidia_api_key)
+        import os
+        return bool(
+            self.nvidia_api_key
+            or os.environ.get("OPENAI_API_KEY")
+            or os.environ.get("ANTHROPIC_API_KEY")
+        )
 
     def write_onchainos_env(self) -> None:
         """Write OKX credentials to ~/.onchainos/.env for the CLI."""
