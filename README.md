@@ -2,8 +2,6 @@
 
 **Multi-Agent DAO Governance Analysis & Voting Assistant**
 
-Built for the **OKX AI Genesis Hackathon — Agent Service Provider (ASP) track**.
-
 ---
 
 ## What is Purposa?
