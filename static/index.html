@@ -194,12 +194,68 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   gap: 5px;
   margin-left: auto;
   padding: 8px;
+  position: relative;
+  z-index: 101;
 }
 .nav-menu-btn span {
   width: 22px; height: 2px;
   background: var(--txt);
   border-radius: 2px;
-  transition: .3s;
+  transition: transform .3s, opacity .3s;
+  transform-origin: center;
+}
+.nav-menu-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-menu-btn.open span:nth-child(2) { opacity: 0; }
+.nav-menu-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ── Mobile menu panel ─────────────────────────────────── */
+.mobile-menu {
+  position: fixed;
+  top: var(--nav-h);
+  left: 0; right: 0;
+  z-index: 99;
+  background: rgba(12,14,22,.97);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transition: max-height .3s ease, opacity .25s ease;
+}
+.mobile-menu.open {
+  max-height: calc(100vh - var(--nav-h));
+  overflow-y: auto;
+  opacity: 1;
+  visibility: visible;
+}
+.mobile-menu-inner {
+  padding: .75rem 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+}
+.mobile-menu-link {
+  padding: .95rem .1rem;
+  font-size: 1.02rem;
+  font-weight: 500;
+  color: var(--txt-2);
+  border-bottom: 1px solid var(--border);
+  transition: color .2s;
+}
+.mobile-menu-link:hover, .mobile-menu-link:active { color: var(--txt); }
+.mobile-menu-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  margin-top: 1.25rem;
+  padding: .85rem 1.4rem;
+  background: var(--grad);
+  border-radius: var(--r-sm);
+  font-size: .95rem;
+  font-weight: 600;
+  color: #fff !important;
 }
 
 /* ═══════════════════════════════════════════════════════ */
@@ -1006,17 +1062,29 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
     <ul class="nav-links" role="list">
       <li><a href="#how">How it works</a></li>
       <li><a href="#features">Features</a></li>
-      <li><a href="#tech">Tech</a></li>
+      <li><a href="#tech">Tech stack</a></li>
       <li><a href="#faq">FAQ</a></li>
     </ul>
     <a href="/docs" class="nav-cta nav-links" target="_blank" rel="noopener">
       Try the API →
     </a>
-    <button class="nav-menu-btn" aria-label="Open menu" aria-expanded="false" id="menuBtn">
+    <button class="nav-menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu" id="menuBtn">
       <span></span><span></span><span></span>
     </button>
   </div>
 </nav>
+
+<div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="false" aria-label="Mobile navigation">
+  <div class="mobile-menu-inner">
+    <a href="#how" class="mobile-menu-link">How it works</a>
+    <a href="#features" class="mobile-menu-link">Features</a>
+    <a href="#tech" class="mobile-menu-link">Tech stack</a>
+    <a href="#faq" class="mobile-menu-link">FAQ</a>
+    <a href="/docs" class="mobile-menu-cta" target="_blank" rel="noopener">
+      Try the API →
+    </a>
+  </div>
+</div>
 
 <!-- ══════════════════════════════════════════════════════ -->
 <!-- HERO                                                  -->
@@ -1595,12 +1663,37 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
     }
   });
 
-  /* ── Mobile menu (minimal toggle) ─────────────────── */
+  /* ── Mobile menu ───────────────────────────────────── */
   var menuBtn = document.getElementById('menuBtn');
-  if (menuBtn) {
+  var mobileMenu = document.getElementById('mobileMenu');
+  if (menuBtn && mobileMenu) {
+    var closeMenu = function () {
+      menuBtn.classList.remove('open');
+      menuBtn.setAttribute('aria-expanded', 'false');
+      menuBtn.setAttribute('aria-label', 'Open menu');
+      mobileMenu.classList.remove('open');
+    };
+    var openMenu = function () {
+      menuBtn.classList.add('open');
+      menuBtn.setAttribute('aria-expanded', 'true');
+      menuBtn.setAttribute('aria-label', 'Close menu');
+      mobileMenu.classList.add('open');
+    };
     menuBtn.addEventListener('click', function () {
-      /* On mobile, scroll to #how as a simple fallback */
-      document.getElementById('how') && document.getElementById('how').scrollIntoView({ behavior: 'smooth' });
+      if (mobileMenu.classList.contains('open')) {
+        closeMenu();
+      } else {
+        openMenu();
+      }
+    });
+    mobileMenu.querySelectorAll('a').forEach(function (link) {
+      link.addEventListener('click', function () { closeMenu(); });
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeMenu();
+    });
+    window.addEventListener('resize', function () {
+      if (window.innerWidth > 768) closeMenu();
     });
   }
 
