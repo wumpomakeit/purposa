@@ -20,15 +20,77 @@ from src.config import get_settings
 log = structlog.get_logger(__name__)
 
 
+def _auto_login_wallet(settings) -> bool:
+    """
+    Run `onchainos wallet login` (AK mode) at startup.
+
+    In Railway (and any other ephemeral container), the onchainos session files
+    (session.json, wallets.json, keyring.enc) don't exist until wallet login is
+    called at least once. With OKX_API_KEY + SECRET + PASSPHRASE in env, this
+    is fully non-interactive — no email, no OTP. Takes ~1 second.
+
+    Safe to call on every restart: idempotent, just refreshes the session.
+    Returns True on success, False on any failure (non-fatal).
+    """
+    import subprocess
+
+    if not settings.has_okx_credentials:
+        log.warning("wallet.auto_login_skipped", reason="OKX credentials not configured")
+        return False
+
+    import os
+    env = os.environ.copy()
+    env["OKX_API_KEY"] = settings.okx_api_key
+    env["OKX_SECRET_KEY"] = settings.okx_secret_key
+    env["OKX_PASSPHRASE"] = settings.okx_passphrase
+
+    try:
+        result = subprocess.run(
+            [settings.onchainos_bin, "wallet", "login"],
+            capture_output=True,
+            text=True,
+            timeout=20,
+            env=env,
+        )
+        if result.returncode == 0:
+            import json
+            data = json.loads(result.stdout).get("data", {})
+            log.info(
+                "wallet.auto_login_ok",
+                account=data.get("accountName"),
+                account_id=data.get("accountId"),
+            )
+            return True
+        log.warning("wallet.auto_login_failed", stderr=result.stderr.strip())
+        return False
+    except FileNotFoundError:
+        log.warning(
+            "wallet.onchainos_not_found",
+            path=settings.onchainos_bin,
+            hint="Install onchainos CLI or set ONCHAINOS_BIN env var to the correct path",
+        )
+        return False
+    except Exception as e:
+        log.warning("wallet.auto_login_error", error=str(e))
+        return False
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
+    # Write OKX creds to ~/.onchainos/.env so the CLI can also read them from disk
     settings.write_onchainos_env()
+    # Auto-login wallet on every startup — required for fresh Railway containers
+    # where session files don't persist between deploys.
+    # AK-mode login is non-interactive: uses OKX_API_KEY + SECRET + PASSPHRASE.
+    import asyncio
+    wallet_ok = await asyncio.get_event_loop().run_in_executor(None, _auto_login_wallet, settings)
     log.info(
         "purposa.startup",
         env=settings.purposa_env,
         okx_configured=settings.has_okx_credentials,
         llm_available=settings.has_llm_credentials,
+        wallet_session_established=wallet_ok,
         wallet_address_configured=bool(settings.seller_address),
     )
     yield

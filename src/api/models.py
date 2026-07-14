@@ -108,7 +108,15 @@ class VoteResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     version: str
-    wallet_connected: bool
+    wallet_connected: bool = Field(
+        ...,
+        description=(
+            "True when the onchainos CLI is installed and the wallet session is active. "
+            "False does NOT affect POST /analyze — analysis never uses the wallet. "
+            "False only prevents POST /vote. "
+            "On fresh deployments the session is established automatically at startup."
+        ),
+    )
     okx_credentials: bool
     llm_available: bool
     onchainos_version: str
