@@ -34,19 +34,31 @@ log = structlog.get_logger(__name__)
 
 @router.get("/health", response_model=HealthResponse, tags=["System"])
 async def health() -> HealthResponse:
-    """Service health check — verifies wallet and credential status."""
+    """
+    Service health check.
+
+    Notes on wallet_connected:
+    - False does NOT affect POST /analyze (analysis never uses the wallet).
+    - False only prevents POST /vote (EIP-712 signing requires an active session).
+    - In fresh deployments the onchainos session is established automatically at
+      startup via AK-mode login. If it shows False after startup, check that
+      ONCHAINOS_BIN points to the installed binary and OKX credentials are set.
+    """
     settings = get_settings()
 
-    # Check onchainos version
+    # Check onchainos binary presence + version
     try:
         result = subprocess.run(
             [settings.onchainos_bin, "--version"],
             capture_output=True, text=True, timeout=5,
         )
-        onchainos_version = result.stdout.strip()
+        onchainos_version = result.stdout.strip() if result.returncode == 0 else "error"
+    except FileNotFoundError:
+        onchainos_version = f"not found at {settings.onchainos_bin}"
     except Exception:
         onchainos_version = "unavailable"
 
+    # wallet_connected = onchainos CLI reachable AND wallet session active
     wallet_connected = is_wallet_logged_in()
 
     return HealthResponse(
