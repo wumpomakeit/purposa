@@ -262,9 +262,9 @@ async def get_trace(trace_id: str) -> TraceResponse:
     )
 
 
-@router.get("/", tags=["System"])
+@router.get("/api", tags=["System"])
 async def root() -> dict[str, str]:
-    """Purposa service root — API documentation link."""
+    """Purposa API status."""
     return {
         "service": "Purposa",
         "description": "Multi-Agent DAO Governance Analysis & Voting Assistant",

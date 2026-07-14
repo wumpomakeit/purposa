@@ -5,11 +5,14 @@ Entry point for both the FastAPI web service and the CLI.
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import structlog
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from src.api.routes import router
 from src.config import get_settings
@@ -64,6 +67,15 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Landing page served before API routes so "/" → index.html
+    static_dir = Path(__file__).parent.parent / "static"
+    if static_dir.exists():
+        @app.get("/", include_in_schema=False)
+        async def landing():
+            return FileResponse(static_dir / "index.html")
+
+        app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
     app.include_router(router, prefix="")
 

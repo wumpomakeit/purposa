@@ -13,7 +13,15 @@ def client():
 
 
 def test_root(client):
+    # "/" now serves the HTML landing page
     resp = client.get("/")
+    assert resp.status_code == 200
+    # Check for HTML or JSON status response
+    assert "Purposa" in resp.text or resp.status_code == 200
+
+
+def test_api_status(client):
+    resp = client.get("/api")
     assert resp.status_code == 200
     data = resp.json()
     assert data["service"] == "Purposa"
