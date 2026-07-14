@@ -136,14 +136,23 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   width: 32px; height: 32px;
   background: #fff;
   border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
   overflow: hidden;
   flex-shrink: 0;
 }
-.nav-logo-img { width: 28px; height: 28px; object-fit: contain; }
-.nav-logo-svg { width: 28px; height: 32px; }
+.nav-logo-img {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 26px; height: 26px;
+  object-fit: contain;
+}
+.nav-logo-svg {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 22px; height: 26px;
+}
 .nav-wordmark {
   font-family: var(--ff-display);
   font-weight: 700;
