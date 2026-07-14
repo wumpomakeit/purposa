@@ -619,6 +619,270 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 }
 
 /* ═══════════════════════════════════════════════════════ */
+/* ANALYZE APP (in-page)                                  */
+/* ═══════════════════════════════════════════════════════ */
+.analyze-section {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  padding: 0 1.5rem;
+  transition: max-height .5s cubic-bezier(.4,0,.2,1), opacity .4s ease;
+}
+.analyze-section.open {
+  max-height: 5000px;
+  opacity: 1;
+  padding: 0 1.5rem 5rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .analyze-section { transition: none; }
+}
+.analyze-wrap { max-width: 820px; margin: 0 auto; }
+.analyze-card {
+  position: relative;
+  background: var(--bg-s);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 2.25rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+}
+.analyze-close {
+  position: absolute;
+  top: 1.25rem; right: 1.25rem;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: var(--txt-2);
+  transition: background .2s, color .2s;
+}
+.analyze-close:hover { background: rgba(255,255,255,.12); color: var(--txt); }
+
+.analyze-state { display: none; }
+.analyze-state.active { display: block; }
+
+.analyze-title { font-size: 1.4rem; font-weight: 700; margin-bottom: .5rem; padding-right: 2rem; }
+.analyze-sub { font-size: .92rem; color: var(--txt-2); line-height: 1.6; margin-bottom: 1.75rem; max-width: 520px; }
+.analyze-hint { font-size: .78rem; color: var(--txt-3); margin-top: .75rem; word-break: break-all; }
+
+.analyze-form { display: flex; gap: .75rem; flex-wrap: wrap; }
+.analyze-input {
+  flex: 1 1 260px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: .85rem 1rem;
+  color: var(--txt);
+  font-size: .9rem;
+  transition: border-color .2s;
+}
+.analyze-input::placeholder { color: var(--txt-3); }
+.analyze-input:focus { border-color: var(--border-hi); outline: none; }
+.analyze-submit { flex-shrink: 0; white-space: nowrap; }
+button.analyze-submit { font-family: var(--ff-body); }
+
+/* ── Loading (pipeline) ─────────────────────────────── */
+.analyze-loading { display: flex; flex-direction: column; align-items: center; gap: 1.75rem; padding: 1rem 0 .5rem; }
+.aloading-pipeline { display: flex; align-items: center; justify-content: center; gap: .85rem; flex-wrap: wrap; }
+.aloading-node { display: flex; flex-direction: column; align-items: center; gap: .5rem; }
+.aloading-chip {
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(37,99,235,.08);
+  border: 1px solid rgba(37,99,235,.25);
+  font-family: var(--ff-mono);
+  font-size: .95rem;
+  color: var(--txt-3);
+  transition: background .35s, border-color .35s, color .35s, box-shadow .35s;
+}
+.aloading-chip.active {
+  background: rgba(37,99,235,.18);
+  border-color: var(--blue-l);
+  color: var(--blue-l);
+  box-shadow: 0 0 18px rgba(37,99,235,.35);
+}
+.aloading-chip.done {
+  background: rgba(16,185,129,.14);
+  border-color: rgba(16,185,129,.5);
+  color: #6EE7B7;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .aloading-chip.active { animation: chipPulse 1.5s ease-in-out infinite; }
+}
+@keyframes chipPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(37,99,235,.18); }
+  50%      { box-shadow: 0 0 24px rgba(37,99,235,.45); }
+}
+.aloading-label { font-size: .62rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--txt-2); white-space: nowrap; }
+.aloading-arrow { font-size: .9rem; color: var(--txt-3); }
+.aloading-timer { font-size: .75rem; color: var(--txt-3); }
+
+/* ── Payment (402) ──────────────────────────────────── */
+.pay-price { display: flex; align-items: baseline; gap: .6rem; margin-bottom: .5rem; flex-wrap: wrap; }
+.pay-price-val {
+  font-family: var(--ff-display);
+  font-size: 1.9rem;
+  font-weight: 800;
+  background: var(--grad-txt);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.pay-price-unit { font-size: .85rem; color: var(--txt-2); }
+.pay-desc { font-size: .9rem; color: var(--txt-2); line-height: 1.65; margin-bottom: 1.5rem; max-width: 540px; }
+.pay-details { border: 1px solid var(--border); border-radius: var(--r); margin-bottom: 1.5rem; overflow: hidden; }
+.pay-details summary {
+  padding: .9rem 1.1rem;
+  cursor: pointer;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--txt);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.pay-details summary::-webkit-details-marker { display: none; }
+.pay-details .chev { color: var(--txt-2); transition: transform .25s; font-size: .75rem; }
+.pay-details[open] .chev { transform: rotate(180deg); }
+.pay-details[open] summary { border-bottom: 1px solid var(--border); }
+.pay-details-body { padding: 1.1rem; font-size: .82rem; color: var(--txt-2); line-height: 1.6; }
+.pay-code {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: .75rem .9rem;
+  font-size: .72rem;
+  color: var(--txt-2);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: .5rem 0;
+}
+.pay-copy-btn {
+  font-size: .72rem;
+  padding: .35rem .65rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--txt-2);
+  transition: border-color .2s, color .2s;
+}
+.pay-copy-btn:hover { border-color: var(--border-hi); color: var(--txt); }
+.pay-auth-row { display: flex; gap: .6rem; flex-wrap: wrap; }
+
+/* ── Verdict (200) ──────────────────────────────────── */
+.verdict-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.verdict-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .55rem 1.2rem;
+  border-radius: 999px;
+  font-family: var(--ff-display);
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+.verdict-badge.for      { background: rgba(16,185,129,.12); color: #34D399; border: 1px solid rgba(16,185,129,.4); }
+.verdict-badge.against  { background: rgba(239,68,68,.12);  color: #F87171; border: 1px solid rgba(239,68,68,.4); }
+.verdict-badge.abstain  { background: rgba(136,146,164,.14); color: #9CA6BC; border: 1px solid rgba(136,146,164,.35); }
+.verdict-proposal { font-size: .78rem; color: var(--txt-3); max-width: 300px; text-align: right; }
+
+.verdict-conf { margin-bottom: 1.5rem; }
+.verdict-conf-label { display: flex; justify-content: space-between; font-size: .78rem; color: var(--txt-2); margin-bottom: .45rem; }
+.verdict-conf-bar { height: 8px; border-radius: 4px; background: rgba(255,255,255,.06); overflow: hidden; }
+.verdict-conf-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--blue), var(--green)); transition: width .8s ease; width: 0; }
+
+.verdict-summary { font-size: .95rem; color: var(--txt); line-height: 1.75; margin-bottom: 1.75rem; }
+
+.verdict-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.75rem; }
+.verdict-col h4 { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--txt-3); margin-bottom: .8rem; }
+.verdict-col ul { list-style: none; display: flex; flex-direction: column; gap: .6rem; }
+.verdict-col li { font-size: .85rem; color: var(--txt-2); line-height: 1.55; padding-left: 1.15rem; position: relative; }
+.verdict-col.pros li:not(.empty)::before { content: '+'; position: absolute; left: 0; top: 0; color: var(--green); font-weight: 700; }
+.verdict-col.cons li:not(.empty)::before { content: '–'; position: absolute; left: 0; top: 0; color: var(--red); font-weight: 700; }
+.verdict-col .empty { font-size: .8rem; color: var(--txt-3); padding-left: 0; }
+
+.verdict-flags { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.75rem; }
+.risk-chip {
+  font-size: .72rem;
+  font-weight: 600;
+  padding: .3rem .65rem;
+  border-radius: 6px;
+  cursor: default;
+}
+.risk-chip.critical, .risk-chip.high { background: rgba(239,68,68,.12); color: #F87171; }
+.risk-chip.medium                    { background: rgba(245,158,11,.12); color: #FCD34D; }
+.risk-chip.low                       { background: rgba(37,99,235,.1);  color: var(--blue-l); }
+
+.verdict-trace { border: 1px solid var(--border); border-radius: var(--r); margin-bottom: 1.75rem; overflow: hidden; }
+.verdict-trace summary {
+  padding: .9rem 1.1rem;
+  cursor: pointer;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--txt);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.verdict-trace summary::-webkit-details-marker { display: none; }
+.verdict-trace .chev { color: var(--txt-2); transition: transform .25s; font-size: .75rem; }
+.verdict-trace[open] .chev { transform: rotate(180deg); }
+.verdict-trace[open] summary { border-bottom: 1px solid var(--border); }
+.trace-row { display: flex; gap: .9rem; padding: .8rem 1.1rem; border-top: 1px solid var(--border); }
+.trace-row:first-child { border-top: none; }
+.trace-role { font-family: var(--ff-mono); font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--blue-l); flex-shrink: 0; width: 96px; }
+.trace-preview { font-size: .8rem; color: var(--txt-2); line-height: 1.55; }
+.trace-meta { font-size: .72rem; color: var(--txt-3); padding: .8rem 1.1rem; border-top: 1px solid var(--border); font-family: var(--ff-mono); }
+
+.verdict-vote { border-top: 1px solid var(--border); padding-top: 1.5rem; }
+.vote-choices { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 1.25rem; }
+.vote-choice {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+.vote-choice:hover { border-color: var(--border-hi); }
+.vote-choice.selected { border-color: var(--blue-l); background: rgba(37,99,235,.06); }
+.vote-choice input[type="radio"] { accent-color: var(--blue-l); flex-shrink: 0; }
+.vote-choice-label { font-size: .88rem; color: var(--txt); }
+.vote-choice .rec-tag {
+  margin-left: auto;
+  font-size: .62rem;
+  font-weight: 700;
+  padding: .18rem .5rem;
+  border-radius: 4px;
+  background: rgba(124,58,237,.12);
+  color: var(--purple-l);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.vote-btn[disabled] { opacity: .45; cursor: not-allowed; box-shadow: none !important; transform: none !important; }
+.vote-result { margin-top: 1rem; padding: 1rem 1.1rem; border-radius: var(--r-sm); border: 1px solid var(--border); font-size: .85rem; line-height: 1.6; }
+.vote-result.ok  { border-color: rgba(16,185,129,.4); background: rgba(16,185,129,.07); color: #6EE7B7; }
+.vote-result.err { border-color: rgba(239,68,68,.4);  background: rgba(239,68,68,.07);  color: #FCA5A5; }
+
+/* ── Error state ────────────────────────────────────── */
+.analyze-error { text-align: center; padding: 1.5rem 0 .5rem; }
+.analyze-error-icon { font-size: 2rem; margin-bottom: 1rem; }
+.analyze-error-msg { font-size: 1rem; color: var(--txt); margin-bottom: .5rem; max-width: 480px; margin-left: auto; margin-right: auto; }
+.analyze-error-detail { font-size: .78rem; color: var(--txt-3); font-family: var(--ff-mono); margin-bottom: 1.5rem; word-break: break-word; }
+
+/* ═══════════════════════════════════════════════════════ */
 /* HOW IT WORKS                                           */
 /* ═══════════════════════════════════════════════════════ */
 .how { background: var(--bg-s); }
@@ -991,6 +1255,21 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   .footer-bottom { flex-direction: column; align-items: flex-start; }
   .nav-links, .nav-cta { display: none; }
   .nav-menu-btn { display: flex; }
+
+  .analyze-card { padding: 1.5rem 1.25rem; }
+  .analyze-close { top: 1rem; right: 1rem; }
+  .analyze-form { flex-direction: column; align-items: stretch; }
+  .analyze-input { flex: 0 0 auto; }
+  .analyze-submit { justify-content: center; }
+  .aloading-pipeline { gap: .6rem; }
+  .aloading-arrow { display: none; }
+  .aloading-chip { width: 40px; height: 40px; }
+  .pay-auth-row { flex-direction: column; align-items: stretch; }
+  .verdict-head { flex-direction: column; }
+  .verdict-proposal { text-align: left; max-width: 100%; }
+  .verdict-cols { grid-template-columns: 1fr; gap: 1.25rem; }
+  .trace-row { flex-direction: column; gap: .3rem; }
+  .trace-role { width: auto; }
 }
 </style>
 </head>
@@ -1062,10 +1341,10 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
         One click votes through your OKX Agentic Wallet.
       </p>
       <div class="hero-actions">
-        <a href="/docs" class="btn-primary" target="_blank" rel="noopener">
+        <button type="button" class="btn-primary" id="analyzeOpenBtn" aria-expanded="false" aria-controls="analyzeApp">
           Analyze a proposal
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </a>
+        </button>
         <a href="#how" class="btn-secondary">
           How it works
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 2v10M3 8l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1143,6 +1422,176 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
           <span>4 agents · 8.2s</span>
           <span class="mono">trace: a3f8d2…</span>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- ANALYZE APP (in-page)                                 -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="analyze-section" id="analyzeApp" aria-labelledby="analyze-title">
+  <div class="container">
+    <div class="analyze-wrap">
+      <div class="analyze-card">
+        <button type="button" class="analyze-close" id="analyzeCloseBtn" aria-label="Close analysis panel">✕</button>
+
+        <!-- ── State: input ── -->
+        <div class="analyze-state active" data-state="input">
+          <p class="section-label" style="margin-bottom:.4rem">Try it live</p>
+          <h2 class="analyze-title display" id="analyze-title">Analyze a governance proposal</h2>
+          <p class="analyze-sub">Paste a Snapshot proposal link. Four agents will read it and hand you a verdict.</p>
+          <form class="analyze-form" id="analyzeForm" novalidate>
+            <input
+              type="text"
+              class="analyze-input mono"
+              id="proposalUrlInput"
+              name="proposal_url"
+              placeholder="https://snapshot.org/#/uniswap.eth/proposal/0xabc123..."
+              autocomplete="off"
+              spellcheck="false"
+              required
+              aria-label="Snapshot proposal URL">
+            <button type="submit" class="btn-primary analyze-submit">
+              Analyze
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </form>
+          <p class="analyze-hint">e.g. https://snapshot.org/#/aave.eth/proposal/0xabc123def4567890abc123def4567890abc123def4567890abc123def4567890</p>
+        </div>
+
+        <!-- ── State: loading ── -->
+        <div class="analyze-state" data-state="loading">
+          <h2 class="analyze-title display">Reading the proposal…</h2>
+          <p class="analyze-sub">This usually takes 30–60 seconds — four independent agents are analyzing the full proposal, discussion, and vote data.</p>
+          <div class="analyze-loading">
+            <div class="aloading-pipeline" id="aloadingPipeline" role="status" aria-live="polite">
+              <div class="aloading-node" data-agent="0">
+                <div class="aloading-chip">Σ</div>
+                <span class="aloading-label">Summarizer</span>
+              </div>
+              <span class="aloading-arrow">→</span>
+              <div class="aloading-node" data-agent="1">
+                <div class="aloading-chip">⚖</div>
+                <span class="aloading-label">Critic</span>
+              </div>
+              <span class="aloading-arrow">→</span>
+              <div class="aloading-node" data-agent="2">
+                <div class="aloading-chip">⚑</div>
+                <span class="aloading-label">Risk Assessor</span>
+              </div>
+              <span class="aloading-arrow">→</span>
+              <div class="aloading-node" data-agent="3">
+                <div class="aloading-chip">◈</div>
+                <span class="aloading-label">Judge</span>
+              </div>
+            </div>
+            <span class="aloading-timer mono" id="aloadingTimer">0s elapsed</span>
+          </div>
+        </div>
+
+        <!-- ── State: payment (402) ── -->
+        <div class="analyze-state" data-state="payment">
+          <h2 class="analyze-title display">Payment required</h2>
+          <div class="pay-price">
+            <span class="pay-price-val" id="payPriceVal">100 units</span>
+            <span class="pay-price-unit" id="payPriceUnit">≈ 0.0001 USD₮0</span>
+          </div>
+          <p class="pay-desc" id="payDesc">
+            Each analysis is billed pay-per-call via the x402 protocol through your OKX Agentic Wallet — no subscription, no idle charges.
+          </p>
+          <details class="pay-details" id="payDetails">
+            <summary>Payment instructions (technical) <span class="chev">▾</span></summary>
+            <div class="pay-details-body">
+              <p id="payInstructions">Run the command below with the OKX Agentic Wallet's onchainos CLI, then paste the returned authorization value here to continue.</p>
+              <div class="pay-code mono" id="payCliCommand">onchainos payment pay --payload '…'</div>
+              <button type="button" class="pay-copy-btn" id="payCopyBtn">Copy command</button>
+              <p style="margin-top:.85rem">Raw <code class="mono">x402_payload</code>:</p>
+              <div class="pay-code mono" id="payPayload" style="max-height:120px;overflow-y:auto"></div>
+            </div>
+          </details>
+          <form id="payForm">
+            <label class="analyze-hint" for="payAuthInput" style="display:block;margin:0 0 .4rem">Authorization value returned by <code class="mono">onchainos payment pay</code></label>
+            <div class="pay-auth-row">
+              <input
+                type="text"
+                class="analyze-input mono"
+                id="payAuthInput"
+                placeholder="Paste the authorization header value here"
+                autocomplete="off"
+                spellcheck="false">
+              <button type="submit" class="btn-primary analyze-submit">Pay &amp; Continue</button>
+            </div>
+            <p class="analyze-hint" id="payError" style="display:none;color:#F87171"></p>
+          </form>
+          <button type="button" class="btn-secondary" id="payBackBtn" style="margin-top:1rem">← Back</button>
+        </div>
+
+        <!-- ── State: success ── -->
+        <div class="analyze-state" data-state="success">
+          <div class="verdict-head">
+            <div>
+              <span class="verdict-badge" id="verdictBadge">—</span>
+            </div>
+            <span class="verdict-proposal mono" id="verdictProposal"></span>
+          </div>
+
+          <div class="verdict-conf">
+            <div class="verdict-conf-label">
+              <span>Confidence</span>
+              <span id="verdictConfPct" class="mono">—</span>
+            </div>
+            <div class="verdict-conf-bar"><div class="verdict-conf-fill" id="verdictConfFill" style="width:0"></div></div>
+          </div>
+
+          <p class="verdict-summary" id="verdictSummary"></p>
+
+          <div class="verdict-cols">
+            <div class="verdict-col pros">
+              <h4>Pros</h4>
+              <ul id="verdictPros"></ul>
+            </div>
+            <div class="verdict-col cons">
+              <h4>Cons</h4>
+              <ul id="verdictCons"></ul>
+            </div>
+          </div>
+
+          <div class="verdict-flags" id="verdictFlags"></div>
+
+          <details class="verdict-trace" id="traceDetails">
+            <summary>View reasoning trace <span class="chev">▾</span></summary>
+            <div class="pay-details-body" id="traceBody">
+              <p class="analyze-hint">Loading trace…</p>
+            </div>
+          </details>
+
+          <div class="verdict-vote">
+            <h4 style="font-family:var(--ff-display);font-size:1rem;font-weight:700;margin-bottom:.85rem">Cast your vote</h4>
+            <p class="analyze-hint" style="margin-bottom:1rem">Review the verdict above, then choose how to vote. Purposa never votes on your behalf automatically.</p>
+            <form id="voteForm">
+              <div class="vote-choices" id="voteChoices"></div>
+              <button type="submit" class="btn-primary analyze-submit vote-btn" id="voteSubmitBtn" disabled>
+                Vote
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </form>
+            <div id="voteResult"></div>
+          </div>
+
+          <button type="button" class="btn-secondary" id="successBackBtn" style="margin-top:1.5rem">Analyze another proposal</button>
+        </div>
+
+        <!-- ── State: error ── -->
+        <div class="analyze-state" data-state="error">
+          <div class="analyze-error">
+            <div class="analyze-error-icon">⚠</div>
+            <p class="analyze-error-msg" id="errorMsg">Something went wrong.</p>
+            <p class="analyze-error-detail" id="errorDetail"></p>
+            <button type="button" class="btn-primary analyze-submit" id="errorRetryBtn">Try again</button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -1654,6 +2103,529 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 
   /* ── Stagger reveal delays for children ────────────── */
   /* Already set via inline style="transition-delay" */
+
+  /* ── Analyze app (in-page /analyze, /vote, /trace flow) ──── */
+  (function () {
+    var analyzeOpenBtn = document.getElementById('analyzeOpenBtn');
+    var analyzeSection = document.getElementById('analyzeApp');
+    var analyzeCloseBtn = document.getElementById('analyzeCloseBtn');
+    if (!analyzeOpenBtn || !analyzeSection) return;
+
+    var analyzeStates = analyzeSection.querySelectorAll('.analyze-state');
+    var analyzeForm = document.getElementById('analyzeForm');
+    var proposalUrlInput = document.getElementById('proposalUrlInput');
+
+    var aloadingChips = Array.prototype.slice.call(analyzeSection.querySelectorAll('#aloadingPipeline .aloading-chip'));
+    var aloadingTimer = document.getElementById('aloadingTimer');
+
+    var payPriceVal = document.getElementById('payPriceVal');
+    var payPriceUnit = document.getElementById('payPriceUnit');
+    var payDesc = document.getElementById('payDesc');
+    var payDetails = document.getElementById('payDetails');
+    var payInstructions = document.getElementById('payInstructions');
+    var payCliCommand = document.getElementById('payCliCommand');
+    var payCopyBtn = document.getElementById('payCopyBtn');
+    var payPayload = document.getElementById('payPayload');
+    var payForm = document.getElementById('payForm');
+    var payAuthInput = document.getElementById('payAuthInput');
+    var payError = document.getElementById('payError');
+    var payBackBtn = document.getElementById('payBackBtn');
+
+    var verdictBadge = document.getElementById('verdictBadge');
+    var verdictProposal = document.getElementById('verdictProposal');
+    var verdictConfPct = document.getElementById('verdictConfPct');
+    var verdictConfFill = document.getElementById('verdictConfFill');
+    var verdictSummary = document.getElementById('verdictSummary');
+    var verdictPros = document.getElementById('verdictPros');
+    var verdictCons = document.getElementById('verdictCons');
+    var verdictFlags = document.getElementById('verdictFlags');
+    var traceDetails = document.getElementById('traceDetails');
+    var traceBody = document.getElementById('traceBody');
+    var voteForm = document.getElementById('voteForm');
+    var voteChoices = document.getElementById('voteChoices');
+    var voteSubmitBtn = document.getElementById('voteSubmitBtn');
+    var voteSubmitDefaultHTML = voteSubmitBtn ? voteSubmitBtn.innerHTML : '';
+    var voteResult = document.getElementById('voteResult');
+    var successBackBtn = document.getElementById('successBackBtn');
+
+    var errorMsg = document.getElementById('errorMsg');
+    var errorDetail = document.getElementById('errorDetail');
+    var errorRetryBtn = document.getElementById('errorRetryBtn');
+
+    var reduceMotionAnalyze = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var pendingProposalUrl = '';
+    var lastAnalyzeData = null;
+    var traceLoaded = false;
+    var loadingTimerInterval = null;
+    var loadingCycleInterval = null;
+    var loadingSeconds = 0;
+    var loadingNodeIndex = 0;
+
+    var analyzeCardEl = analyzeSection.querySelector('.analyze-card');
+    function setAnalyzeState(name) {
+      analyzeStates.forEach(function (el) {
+        el.classList.toggle('active', el.getAttribute('data-state') === name);
+      });
+      /* Panel height varies a lot between states (e.g. payment → error) — keep
+         the card in view so the user isn't left scrolled past a now-shorter panel. */
+      if (analyzeSection.classList.contains('open') && analyzeCardEl) {
+        requestAnimationFrame(function () {
+          analyzeCardEl.scrollIntoView({ behavior: reduceMotionAnalyze ? 'auto' : 'smooth', block: 'nearest' });
+        });
+      }
+    }
+
+    function parseJsonSafe(res) {
+      return res.text().then(function (text) {
+        if (!text) return null;
+        try { return JSON.parse(text); } catch (e) { return null; }
+      });
+    }
+
+    /* ── Open / close ─────────────────────────────────── */
+    function openAnalyzeSection() {
+      analyzeSection.classList.add('open');
+      analyzeSection.removeAttribute('aria-hidden');
+      analyzeOpenBtn.setAttribute('aria-expanded', 'true');
+      setAnalyzeState('input');
+      setTimeout(function () {
+        analyzeSection.scrollIntoView({ behavior: reduceMotionAnalyze ? 'auto' : 'smooth', block: 'start' });
+        if (proposalUrlInput) proposalUrlInput.focus({ preventScroll: true });
+      }, 60);
+    }
+    function closeAnalyzeSection() {
+      analyzeSection.classList.remove('open');
+      analyzeSection.setAttribute('aria-hidden', 'true');
+      analyzeOpenBtn.setAttribute('aria-expanded', 'false');
+      stopLoadingAnimation();
+    }
+    analyzeOpenBtn.addEventListener('click', function () {
+      if (analyzeSection.classList.contains('open')) {
+        closeAnalyzeSection();
+      } else {
+        openAnalyzeSection();
+      }
+    });
+    if (analyzeCloseBtn) analyzeCloseBtn.addEventListener('click', closeAnalyzeSection);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && analyzeSection.classList.contains('open')) closeAnalyzeSection();
+    });
+
+    /* ── Loading animation (four-agent pipeline) ─────────── */
+    function startLoadingAnimation() {
+      loadingSeconds = 0;
+      if (aloadingTimer) aloadingTimer.textContent = '0s elapsed';
+      loadingTimerInterval = setInterval(function () {
+        loadingSeconds += 1;
+        if (aloadingTimer) aloadingTimer.textContent = loadingSeconds + 's elapsed';
+      }, 1000);
+
+      aloadingChips.forEach(function (c) { c.classList.remove('active', 'done'); });
+      if (!aloadingChips.length) return;
+
+      if (reduceMotionAnalyze) {
+        aloadingChips.forEach(function (c) { c.classList.add('active'); });
+        return;
+      }
+      loadingNodeIndex = 0;
+      aloadingChips[0].classList.add('active');
+      loadingCycleInterval = setInterval(function () {
+        aloadingChips[loadingNodeIndex].classList.remove('active');
+        aloadingChips[loadingNodeIndex].classList.add('done');
+        loadingNodeIndex = (loadingNodeIndex + 1) % aloadingChips.length;
+        if (loadingNodeIndex === 0) {
+          aloadingChips.forEach(function (c) { c.classList.remove('done'); });
+        }
+        aloadingChips[loadingNodeIndex].classList.add('active');
+      }, 1400);
+    }
+    function stopLoadingAnimation() {
+      clearInterval(loadingTimerInterval);
+      clearInterval(loadingCycleInterval);
+      loadingTimerInterval = null;
+      loadingCycleInterval = null;
+    }
+
+    /* ── Input → submit ───────────────────────────────── */
+    function looksLikeSnapshotUrl(v) {
+      v = (v || '').trim();
+      if (!v) return false;
+      return /snapshot\.org/i.test(v) || /^0x[a-fA-F0-9]{6,}$/.test(v);
+    }
+    if (analyzeForm) {
+      analyzeForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var url = proposalUrlInput.value.trim();
+        if (!looksLikeSnapshotUrl(url)) {
+          showErrorState(
+            "That doesn't look like a valid Snapshot proposal URL.",
+            'Expected something like https://snapshot.org/#/uniswap.eth/proposal/0xabc123...'
+          );
+          return;
+        }
+        runAnalyze(url, null);
+      });
+    }
+
+    /* ── Core request ─────────────────────────────────── */
+    function runAnalyze(url, authValue) {
+      pendingProposalUrl = url;
+      setAnalyzeState('loading');
+      startLoadingAnimation();
+
+      var headers = { 'Content-Type': 'application/json' };
+      if (authValue) headers['Authorization'] = authValue;
+
+      fetch('/analyze', {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({ proposal_url: url }),
+      })
+        .then(function (res) {
+          return parseJsonSafe(res).then(function (body) { return { res: res, body: body }; });
+        })
+        .then(function (result) {
+          stopLoadingAnimation();
+          var res = result.res, body = result.body || {};
+          if (res.status === 402) {
+            showPaymentState(body);
+          } else if (res.ok) {
+            showSuccessState(body);
+          } else if (res.status === 422) {
+            showErrorState(
+              "That doesn't look like a valid Snapshot proposal URL.",
+              body && body.detail ? JSON.stringify(body.detail) : ''
+            );
+          } else if (res.status === 404) {
+            showErrorState(
+              "We couldn't find that proposal on Snapshot. Double-check the link and try again.",
+              body.detail || ''
+            );
+          } else {
+            showErrorState(
+              'Something went wrong on our end (HTTP ' + res.status + '). Please try again in a moment.',
+              body.detail || body.message || ''
+            );
+          }
+        })
+        .catch(function (err) {
+          stopLoadingAnimation();
+          showErrorState('Network error — check your connection and try again.', err && err.message ? err.message : '');
+        });
+    }
+
+    /* ── 402 payment state ────────────────────────────── */
+    function decodeX402Payload(b64) {
+      try { return JSON.parse(atob(b64)); } catch (e) { return null; }
+    }
+    function showPaymentState(body) {
+      body = body || {};
+      var payload = body.x402_payload ? decodeX402Payload(body.x402_payload) : null;
+      var accept = payload && payload.accepts && payload.accepts[0];
+      var amount = accept ? accept.amount : '100';
+      var usd = (parseInt(amount, 10) / 1000000).toFixed(4);
+
+      if (payPriceVal) payPriceVal.textContent = amount + ' units';
+      if (payPriceUnit) payPriceUnit.textContent = '≈ ' + usd + ' USD₮0 · via x402';
+      if (payDesc) {
+        payDesc.textContent = body.message ||
+          'Each analysis is billed pay-per-call via the x402 protocol through your OKX Agentic Wallet — no subscription, no idle charges.';
+      }
+      if (payInstructions) {
+        payInstructions.textContent = body.instructions ||
+          "Run the command below with the OKX Agentic Wallet's onchainos CLI, then paste the returned authorization value here to continue.";
+      }
+      if (payCliCommand) payCliCommand.textContent = "onchainos payment pay --payload '" + (body.x402_payload || '') + "'";
+      if (payPayload) payPayload.textContent = body.x402_payload || '(not provided by server)';
+      if (payAuthInput) payAuthInput.value = '';
+      if (payError) payError.style.display = 'none';
+      if (payDetails) payDetails.open = false;
+
+      setAnalyzeState('payment');
+    }
+
+    function copyToClipboard(text, btn) {
+      var origText = btn.textContent;
+      function finish() {
+        btn.textContent = 'Copied!';
+        setTimeout(function () { btn.textContent = origText; }, 1500);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(finish).catch(function () { fallbackCopy(text); finish(); });
+      } else {
+        fallbackCopy(text);
+        finish();
+      }
+    }
+    function fallbackCopy(text) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) { /* no-op */ }
+      document.body.removeChild(ta);
+    }
+    if (payCopyBtn) {
+      payCopyBtn.addEventListener('click', function () {
+        copyToClipboard(payCliCommand ? payCliCommand.textContent : '', payCopyBtn);
+      });
+    }
+    if (payForm) {
+      payForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var val = payAuthInput ? payAuthInput.value.trim() : '';
+        if (!val) {
+          if (payError) {
+            payError.textContent = 'Paste the authorization value returned by onchainos payment pay first.';
+            payError.style.display = 'block';
+          }
+          return;
+        }
+        if (payError) payError.style.display = 'none';
+        runAnalyze(pendingProposalUrl, val);
+      });
+    }
+    if (payBackBtn) payBackBtn.addEventListener('click', function () { setAnalyzeState('input'); });
+
+    /* ── 200 success state ────────────────────────────── */
+    function renderList(ul, items, mapText) {
+      if (!ul) return;
+      ul.innerHTML = '';
+      if (!items || !items.length) {
+        var empty = document.createElement('li');
+        empty.className = 'empty';
+        empty.textContent = 'None flagged.';
+        ul.appendChild(empty);
+        return;
+      }
+      items.forEach(function (item) {
+        var li = document.createElement('li');
+        li.textContent = mapText(item);
+        ul.appendChild(li);
+      });
+    }
+    function renderFlags(flags) {
+      if (!verdictFlags) return;
+      verdictFlags.innerHTML = '';
+      if (!flags || !flags.length) return;
+      flags.forEach(function (f) {
+        var span = document.createElement('span');
+        var sev = ((f && f.severity) || 'low').toLowerCase();
+        span.className = 'risk-chip ' + sev;
+        span.textContent = '⚠ ' + ((f && (f.flag || f.category)) || 'Risk flag');
+        if (f && f.detail) span.title = f.detail;
+        verdictFlags.appendChild(span);
+      });
+    }
+    function renderVoteChoices(data) {
+      if (!voteChoices) return;
+      voteChoices.innerHTML = '';
+      var choices = data.choices || [];
+      choices.forEach(function (choice, i) {
+        var label = document.createElement('label');
+        label.className = 'vote-choice';
+
+        var input = document.createElement('input');
+        input.type = 'radio';
+        input.name = 'voteChoice';
+        input.value = String(i);
+
+        var span = document.createElement('span');
+        span.className = 'vote-choice-label';
+        span.textContent = choice;
+
+        label.appendChild(input);
+        label.appendChild(span);
+
+        if (i === data.recommended_choice_index) {
+          var tag = document.createElement('span');
+          tag.className = 'rec-tag';
+          tag.textContent = 'Purposa recommends';
+          label.appendChild(tag);
+        }
+
+        input.addEventListener('change', function () {
+          voteChoices.querySelectorAll('.vote-choice').forEach(function (el) { el.classList.remove('selected'); });
+          label.classList.add('selected');
+          if (voteSubmitBtn) voteSubmitBtn.disabled = false;
+        });
+
+        voteChoices.appendChild(label);
+      });
+      if (voteSubmitBtn) voteSubmitBtn.disabled = true;
+    }
+    function showSuccessState(data) {
+      lastAnalyzeData = data || {};
+      var rec = (lastAnalyzeData.recommendation || '').toLowerCase();
+
+      if (verdictBadge) {
+        verdictBadge.textContent = lastAnalyzeData.recommendation || '—';
+        verdictBadge.className = 'verdict-badge ' + (rec === 'for' ? 'for' : rec === 'against' ? 'against' : 'abstain');
+      }
+      if (verdictProposal) verdictProposal.textContent = lastAnalyzeData.proposal_title || lastAnalyzeData.proposal_id || '';
+
+      var pct = Math.round((lastAnalyzeData.confidence || 0) * 100);
+      if (verdictConfPct) verdictConfPct.textContent = pct + '% confidence';
+      if (verdictConfFill) {
+        verdictConfFill.style.width = '0%';
+        requestAnimationFrame(function () { verdictConfFill.style.width = pct + '%'; });
+      }
+      if (verdictSummary) verdictSummary.textContent = lastAnalyzeData.tldr || lastAnalyzeData.summary || '';
+
+      renderList(verdictPros, lastAnalyzeData.pros, function (p) { return typeof p === 'string' ? p : (p.point || JSON.stringify(p)); });
+      renderList(verdictCons, lastAnalyzeData.cons, function (c) { return typeof c === 'string' ? c : (c.point || JSON.stringify(c)); });
+      renderFlags(lastAnalyzeData.risk_flags);
+      renderVoteChoices(lastAnalyzeData);
+
+      traceLoaded = false;
+      if (traceDetails) traceDetails.open = false;
+      if (traceBody) {
+        traceBody.innerHTML = '';
+        var hint = document.createElement('p');
+        hint.className = 'analyze-hint';
+        hint.textContent = 'Expand to load the reasoning trace…';
+        traceBody.appendChild(hint);
+      }
+      if (voteResult) voteResult.innerHTML = '';
+
+      setAnalyzeState('success');
+    }
+
+    function renderTraceRows(rows, fullData) {
+      if (!traceBody) return;
+      traceBody.innerHTML = '';
+      if (!rows || !rows.length) {
+        var p = document.createElement('p');
+        p.className = 'analyze-hint';
+        p.textContent = 'No trace data available.';
+        traceBody.appendChild(p);
+        return;
+      }
+      rows.forEach(function (r) {
+        var row = document.createElement('div');
+        row.className = 'trace-row';
+        var role = document.createElement('span');
+        role.className = 'trace-role mono';
+        role.textContent = (r && (r.role || r.agent_id)) || '';
+        var preview = document.createElement('span');
+        preview.className = 'trace-preview';
+        preview.textContent = (r && r.content_preview) || '';
+        row.appendChild(role);
+        row.appendChild(preview);
+        traceBody.appendChild(row);
+      });
+      var meta = document.createElement('div');
+      meta.className = 'trace-meta';
+      var d = fullData || lastAnalyzeData || {};
+      var metaText = 'trace: ' + (lastAnalyzeData ? lastAnalyzeData.trace_id : '');
+      if (d.elapsed_ms) metaText += ' · ' + (d.elapsed_ms / 1000).toFixed(1) + 's';
+      meta.textContent = metaText;
+      traceBody.appendChild(meta);
+    }
+    function loadTrace() {
+      if (!lastAnalyzeData || !lastAnalyzeData.trace_id) {
+        renderTraceRows(lastAnalyzeData ? lastAnalyzeData.agent_trace : [], null);
+        return;
+      }
+      fetch('/trace/' + encodeURIComponent(lastAnalyzeData.trace_id))
+        .then(function (res) { return res.ok ? res.json() : Promise.reject(res); })
+        .then(function (payload) {
+          var d = (payload && payload.data) || {};
+          renderTraceRows(d.agent_trace, d);
+        })
+        .catch(function () {
+          renderTraceRows(lastAnalyzeData.agent_trace, null);
+        });
+    }
+    if (traceDetails) {
+      traceDetails.addEventListener('toggle', function () {
+        if (traceDetails.open && !traceLoaded) {
+          traceLoaded = true;
+          loadTrace();
+        }
+      });
+    }
+
+    /* ── Vote submission ──────────────────────────────── */
+    function showVoteResult(ok, text) {
+      if (!voteResult) return;
+      voteResult.innerHTML = '';
+      var div = document.createElement('div');
+      div.className = 'vote-result ' + (ok ? 'ok' : 'err');
+      div.textContent = text;
+      voteResult.appendChild(div);
+    }
+    if (voteForm) {
+      voteForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var checked = voteChoices ? voteChoices.querySelector('input[type="radio"]:checked') : null;
+        if (!checked || !lastAnalyzeData) return;
+        var choiceIndex = parseInt(checked.value, 10);
+
+        voteSubmitBtn.disabled = true;
+        voteSubmitBtn.textContent = 'Submitting vote…';
+        showVoteResult(true, 'Submitting your vote…');
+
+        fetch('/vote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            proposal_url: lastAnalyzeData.proposal_url,
+            choice_index: choiceIndex,
+            trace_id: lastAnalyzeData.trace_id,
+          }),
+        })
+          .then(function (res) {
+            return parseJsonSafe(res).then(function (body) { return { res: res, body: body }; });
+          })
+          .then(function (result) {
+            voteSubmitBtn.innerHTML = voteSubmitDefaultHTML;
+            var res = result.res, body = result.body || {};
+            if (res.ok) {
+              showVoteResult(true, 'Vote cast for "' + (body.choice_label || '') + '" as ' +
+                (body.voter_address || 'the connected wallet') + '. ' + (body.message || ''));
+              voteSubmitBtn.disabled = true;
+            } else {
+              var detail = body.detail || 'The vote could not be submitted.';
+              if (res.status === 503) {
+                detail = "Voting requires the site operator's OKX Agentic Wallet to be connected server-side. " +
+                  (typeof detail === 'string' ? detail : '');
+              }
+              showVoteResult(false, typeof detail === 'string' ? detail : JSON.stringify(detail));
+              voteSubmitBtn.disabled = false;
+            }
+          })
+          .catch(function () {
+            voteSubmitBtn.innerHTML = voteSubmitDefaultHTML;
+            voteSubmitBtn.disabled = false;
+            showVoteResult(false, 'Network error — the vote was not submitted.');
+          });
+      });
+    }
+
+    if (successBackBtn) {
+      successBackBtn.addEventListener('click', function () {
+        if (proposalUrlInput) proposalUrlInput.value = '';
+        setAnalyzeState('input');
+        if (proposalUrlInput) proposalUrlInput.focus();
+      });
+    }
+
+    /* ── Error state ──────────────────────────────────── */
+    function showErrorState(msg, detail) {
+      if (errorMsg) errorMsg.textContent = msg;
+      if (errorDetail) errorDetail.textContent = detail ? String(detail) : '';
+      setAnalyzeState('error');
+    }
+    if (errorRetryBtn) {
+      errorRetryBtn.addEventListener('click', function () {
+        setAnalyzeState('input');
+        if (proposalUrlInput) proposalUrlInput.focus();
+      });
+    }
+  })();
 
 })();
 </script>
