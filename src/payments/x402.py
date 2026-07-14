@@ -11,12 +11,8 @@ Reference: https://github.com/okx/onchainos-skills/blob/main/skills/okx-agent-pa
 from __future__ import annotations
 
 import base64
-import hashlib
-import hmac
 import json
 import subprocess
-import time
-import uuid
 from typing import Any
 
 import structlog
@@ -33,10 +29,19 @@ SCHEME_NAME = "exact"
 
 
 def _build_payment_required_payload(resource_path: str) -> dict[str, Any]:
-    """Build the x402 v2 PAYMENT-REQUIRED payload."""
+    """
+    Build the x402 v2 PAYMENT-REQUIRED payload.
+
+    Field names match the OKX onchainos CLI's exact-scheme expectations:
+      asset             — ERC-20 contract address (not "tokenAddress")
+      payTo             — recipient address (not "recipient")
+      maxTimeoutSeconds — relative timeout in seconds (not "expiresAt")
+      extra.name        — EIP-712 domain name of the token (required by onchainos)
+      extra.version     — EIP-712 domain version of the token
+
+    Reference: https://web3.okx.com/onchainos/dev-docs/payments/payment-use-buyer
+    """
     settings = get_settings()
-    nonce = str(uuid.uuid4())
-    expires_at = int(time.time()) + settings.payment_timeout_seconds
 
     return {
         "x402Version": X402_VERSION,
@@ -48,11 +53,14 @@ def _build_payment_required_payload(resource_path: str) -> dict[str, Any]:
             {
                 "scheme": SCHEME_NAME,
                 "network": settings.payment_network,
-                "tokenAddress": settings.payment_token_address,
+                "asset": settings.payment_token_address,
                 "amount": str(settings.analysis_price_usdt),
-                "recipient": settings.seller_address,
-                "nonce": nonce,
-                "expiresAt": expires_at,
+                "payTo": settings.seller_address,
+                "maxTimeoutSeconds": settings.payment_timeout_seconds,
+                "extra": {
+                    "name": settings.payment_token_name,
+                    "version": settings.payment_token_version,
+                },
             }
         ],
     }
@@ -101,7 +109,7 @@ async def verify_payment(request: Request) -> bool:
     """
     settings = get_settings()
 
-    # Development bypass — any Authorization header passes
+    # Development bypass — any recognised payment header passes
     if not settings.is_production:
         log.warning(
             "payment.bypass",
@@ -109,11 +117,12 @@ async def verify_payment(request: Request) -> bool:
         )
         return True
 
-    auth_header = request.headers.get("Authorization") or request.headers.get("X-PAYMENT")
+    auth_header = _get_payment_header(request)
     if not auth_header:
         return False
 
     # Production: verify via onchainos CLI
+    auth_header = _get_payment_header(request)
     try:
         result = subprocess.run(
             [settings.onchainos_bin, "payment", "verify", "--authorization", auth_header],
@@ -147,6 +156,21 @@ def _build_okx_env() -> dict[str, str]:
     return env
 
 
+def _get_payment_header(request: Request) -> str:
+    """
+    Extract payment token from request headers.
+
+    onchainos payment pay returns header_name = "PAYMENT-SIGNATURE" (x402 v2).
+    We also accept "Authorization" (dev/testing) and legacy "X-PAYMENT" (v1).
+    """
+    return (
+        request.headers.get("PAYMENT-SIGNATURE")
+        or request.headers.get("Authorization")
+        or request.headers.get("X-PAYMENT")
+        or ""
+    )
+
+
 async def payment_gate(request: Request, resource_path: str) -> bool | Response:
     """
     Gate middleware: check payment header.
@@ -155,7 +179,7 @@ async def payment_gate(request: Request, resource_path: str) -> bool | Response:
     Returns a 402 Response if payment is missing.
     Raises HTTPException(402) if payment is present but invalid.
     """
-    auth = request.headers.get("Authorization") or request.headers.get("X-PAYMENT")
+    auth = _get_payment_header(request)
 
     if not auth:
         return build_402_response(resource_path)

@@ -56,6 +56,9 @@ class Settings(BaseSettings):
         default="0x9e29b3aada05bf2d2c827af80bd28dc0b9b4fb0c",
         alias="PAYMENT_TOKEN_ADDRESS",
     )
+    # EIP-712 domain name + version for the payment token — required by onchainos payment pay
+    payment_token_name: str = Field(default="USD\u20ae0", alias="PAYMENT_TOKEN_NAME")
+    payment_token_version: str = Field(default="1", alias="PAYMENT_TOKEN_VERSION")
     payment_timeout_seconds: int = Field(default=120, alias="PAYMENT_TIMEOUT_SECONDS")
 
     # ── Snapshot ──────────────────────────────────────────────────────────
