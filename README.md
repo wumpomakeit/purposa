@@ -238,6 +238,92 @@ Retrieve the full reasoning trace for a prior analysis (audit trail).
 
 ---
 
+## Security Model
+
+**TL;DR: `/analyze` is multi-tenant. `/vote` currently is not — every vote is
+signed and cast with the *operator's* wallet, not the caller's.**
+
+### `POST /analyze` — multi-tenant, any payer
+
+Payment is x402 exact-scheme, per call, and identity-agnostic: whoever holds
+a valid `PAYMENT-SIGNATURE`/`Authorization` header for the returned
+`x402_payload` pays for that specific call from their own wallet. Purposa
+never needs to know who the caller is beyond that one signed authorization.
+Any agent or user with their own OKX Agentic Wallet (or any x402-compatible
+payer) can call this endpoint and pay for themselves. This has been verified
+end-to-end against the live x402 gate.
+
+### `POST /vote` — single operator wallet, disclosed on every response
+
+Voting is **not** currently per-caller. Every `/vote` request signs the
+EIP-712 vote message and submits it to Snapshot Hub using **this
+deployment's own onchainos session** — the same wallet configured via
+`onchainos wallet login` on the server. The vote reflects the *operator's*
+voting power on Snapshot, not the calling agent's or user's.
+
+**Why not per-call auth, given the same investigation applies to `/analyze`'s
+payment step too?** x402 payment signing is a self-contained, stateless
+cryptographic authorization (EIP-3009/Permit2) that the *caller* produces and
+hands to Purposa — Purposa never needs its own session for the caller's side
+of that exchange. Vote **signing**, by contrast, requires an active
+onchainos wallet session on whichever machine runs `onchainos wallet
+sign-message`, and that CLI (v4.2.4, at time of writing) has **no per-call
+auth context**:
+
+- No subcommand used by `/vote` (`wallet sign-message`) accepts a per-call
+  credential, account ID, or session token flag — checked every relevant
+  `--help` output directly.
+- Credential env vars (`OKX_API_KEY` / `OKX_SECRET_KEY` / `OKX_PASSPHRASE`)
+  are consulted only during `wallet login`, never on subsequent commands —
+  confirmed empirically by injecting garbage credentials into a
+  `wallet sign-message` call and observing it succeed unaffected, using
+  whatever session was already on disk.
+- The only "switch identity" mechanism (`wallet switch <ACCOUNT_ID>`)
+  mutates one shared, filesystem-scoped session (`~/.onchainos`) for the
+  entire machine/process — not an isolated per-request context. Under
+  concurrent requests, scripting logins/switches per call would race.
+- `payment pay-local` supports signing with a raw local private key — but
+  only for x402 payment payloads, not generic EIP-712 message signing.
+  There is no "local key" fallback for vote signing.
+
+Given that, **Purposa does not accept API credentials or session tokens
+over `/vote`** — asking callers to hand a third-party server their raw OKX
+`secret_key`/`passphrase` (full exchange-API-level credentials) would be a
+bad security pattern even if the CLI *did* support per-call scoping, and it
+doesn't actually solve the isolation problem here regardless.
+
+Instead, every successful `/vote` response is honest about this and
+includes:
+
+- `signed_by`: always `"operator_wallet"` today (a stable field name so a
+  future per-caller signing path can report differently without breaking
+  callers who check it).
+- `self_serve_instructions`: the *exact* EIP-712 payload that was just
+  signed (proposal, choice, reason, timestamp — everything except the
+  address), plus the precise `onchainos wallet sign-message` and
+  `curl .../api/msg` commands to sign and submit that same vote with your
+  **own** wallet directly against Snapshot Hub. Nothing in this path sends
+  any credential to Purposa — it's a fully self-serve alternative for a
+  technical caller who wants their own voting power reflected.
+
+### The actual fix, if there's time after the hackathon
+
+The clean way to make `/vote` genuinely multi-tenant isn't per-call
+onchainos auth (it doesn't exist) — it's **bring-your-own-signature**
+instead of bring-your-own-credentials: have Purposa hand back the unsigned
+EIP-712 payload (exactly what `self_serve_instructions` already contains),
+let the caller sign it with *any* EIP-712-capable wallet of their choosing
+(onchainos, MetaMask, ethers.js, whatever), and accept the resulting
+signature back on a follow-up call to relay to Snapshot Hub — Purposa never
+touches a credential or private key belonging to the caller. This is a
+small, additive change (a `signature` field on `/vote`, defaulting to
+today's operator-signed behavior when omitted) that wasn't implemented in
+this pass to stay within a realistic hackathon scope, but is the
+recommended next step over anything involving accepting third-party
+credentials.
+
+---
+
 ## Multi-Agent Design
 
 The analysis runs three specialist agents in parallel, then a judge reconciles them:
