@@ -25,7 +25,7 @@ Without leaving your conversation context.
 1. Agent/user → POST /analyze with a Snapshot proposal URL
 2. HTTP 402 returned → x402 payment challenge (OKX exact scheme)
 3. onchainos payment pay --payload '<PAYMENT-REQUIRED header value>'
-4. Replay request with Authorization: <returned_header>
+4. Replay request with PAYMENT-SIGNATURE: <returned_header>
 5. HTTP 200 → { summary, pros, cons, risk_flags, recommendation, confidence, trace_link }
 6. User reviews verdict
 7. User confirms → POST /vote → Purposa signs and submits vote via OKX Agentic Wallet
@@ -61,19 +61,20 @@ OKX_API_KEY="your-api-key"
 OKX_SECRET_KEY="your-secret-key"
 OKX_PASSPHRASE="your-passphrase"
 
-# At least one LLM provider
-OPENAI_API_KEY="sk-..."
-# ANTHROPIC_API_KEY="sk-ant-..."
+# LLM provider (NVIDIA NIM — primary/default)
+NVIDIA_API_KEY="nvapi-..."
 ```
 
 ### 3. Set up OKX Agentic Wallet
 
 ```bash
-bash scripts/setup_okx.sh   # auto-reads .env and configures onchainos
+bash scripts/setup_okx.sh   # auto-reads .env, writes creds to ~/.onchainos/.env
 
 # If not already logged in to the CLI wallet:
 onchainos wallet login
-# Enter your email → enter OTP code → wallet created with TEE-protected key
+# No email argument = API Key (AK) login: non-interactive, uses the
+# OKX_API_KEY / OKX_SECRET_KEY / OKX_PASSPHRASE already in ~/.onchainos/.env.
+# Wallet is created/restored automatically — no OTP, no email prompt.
 ```
 
 ### 4. Install Python dependencies
@@ -140,10 +141,11 @@ PAYLOAD=$(curl -s -X POST http://localhost:8000/analyze \
 # Step 2: Pay via OKX Agentic Wallet
 AUTH=$(onchainos payment pay --payload "$PAYLOAD" | jq -r '.authorization_header')
 
-# Step 3: Replay with auth header
+# Step 3: Replay with the returned header (onchainos returns header_name:
+# "PAYMENT-SIGNATURE" for x402 v2 — the canonical header to use here)
 curl -X POST http://localhost:8000/analyze \
   -H "Content-Type: application/json" \
-  -H "Authorization: $AUTH" \
+  -H "PAYMENT-SIGNATURE: $AUTH" \
   -d '{"proposal_url":"<url>"}'
 ```
 
@@ -334,6 +336,47 @@ The analysis runs three specialist agents in parallel, then a judge reconciles t
 4. **Judge** — reads all three outputs, reconciles disagreements, produces a recommendation with confidence score
 
 This ensemble pattern is more reliable than a single-prompt summarizer: each agent has a narrower mandate, and the judge can reason about where agents agree vs disagree.
+
+---
+
+## LLM Provider Configuration
+
+**`NVIDIA_API_KEY` is the primary/default provider.** It's what `PRIMARY_MODEL` / `SECONDARY_MODEL` / `JUDGE_MODEL` default to (`meta/llama-3.1-8b-instruct` / `meta/llama-3.1-70b-instruct`, via NVIDIA NIM's OpenAI-compatible endpoint):
+
+```bash
+NVIDIA_API_KEY="nvapi-..."     # recommended, primary
+```
+
+**If you don't have NVIDIA access, `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` are both supported as automatic fallbacks** — set either one and the pipeline picks it up with no other required configuration:
+
+```bash
+# OPENAI_API_KEY="sk-..."
+# ANTHROPIC_API_KEY="sk-ant-..."
+```
+
+### Actual provider priority order
+
+Every agent call goes through `call_llm()` (`src/agents/base.py`), which tries providers in this fixed order and uses the first one with a key present:
+
+1. **NVIDIA** — if `NVIDIA_API_KEY` is set
+2. **OpenAI** — if `NVIDIA_API_KEY` is absent and `OPENAI_API_KEY` is set
+3. **Anthropic** — if neither of the above is set and `ANTHROPIC_API_KEY` is set
+4. **Rule-based fallback** — if no key is configured at all, *or* if the live LLM call itself throws (see the OpenAI caveat below), Purposa falls back to a deterministic, non-LLM rule-based analyzer rather than erroring. The response still comes back `HTTP 200` — check the `warnings` array to see whether a rule-based fallback was used instead of the full 4-agent verdict.
+
+This selection is **automatic** — you do **not** need to set `LLM_PROVIDER` to activate the OpenAI/Anthropic fallback. In fact, `LLM_PROVIDER` currently has **no effect** on this pipeline at all: every agent (`summarizer.py` / `critic.py` / `risk.py` / `judge.py`) explicitly passes `prefer="nvidia"` into `call_llm()`, and `prefer` always takes priority over `settings.llm_provider` when set. Which provider actually runs is determined solely by which key(s) you have configured, not by `LLM_PROVIDER` — that field exists in `src/config.py` but isn't currently wired into the agents' call sites.
+
+### ⚠️ Known gap: OpenAI-only setups need the model names overridden too
+
+`PRIMARY_MODEL` / `SECONDARY_MODEL` / `JUDGE_MODEL` default to NVIDIA/Llama-style model IDs, which OpenAI's API doesn't recognize. With only `OPENAI_API_KEY` set, the fallback *will* trigger and attempt a real OpenAI call — but that call fails on the unrecognized model name, and the pipeline's error handling silently degrades to the rule-based analyzer above (still `HTTP 200`, flagged only in `warnings`, not a visible error). To get genuine OpenAI-backed analysis rather than a silent rule-based fallback, also override the model names:
+
+```bash
+OPENAI_API_KEY="sk-..."
+PRIMARY_MODEL="gpt-4o-mini"
+SECONDARY_MODEL="gpt-4o-mini"
+JUDGE_MODEL="gpt-4o"
+```
+
+**Anthropic doesn't have this problem.** `call_anthropic()` ignores the configured model name entirely and always uses a fixed, valid Anthropic model (`claude-3-5-haiku-20241022`) internally — `ANTHROPIC_API_KEY` alone is enough to get a real LLM-backed verdict, no model overrides needed.
 
 ---
 
