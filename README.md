@@ -25,7 +25,7 @@ Without leaving your conversation context.
 1. Agent/user → POST /analyze with a Snapshot proposal URL
 2. HTTP 402 returned → x402 payment challenge (OKX exact scheme)
 3. onchainos payment pay --payload '<PAYMENT-REQUIRED header value>'
-4. Replay request with Authorization: <returned_header>
+4. Replay request with PAYMENT-SIGNATURE: <returned_header>
 5. HTTP 200 → { summary, pros, cons, risk_flags, recommendation, confidence, trace_link }
 6. User reviews verdict
 7. User confirms → POST /vote → Purposa signs and submits vote via OKX Agentic Wallet
@@ -61,19 +61,20 @@ OKX_API_KEY="your-api-key"
 OKX_SECRET_KEY="your-secret-key"
 OKX_PASSPHRASE="your-passphrase"
 
-# At least one LLM provider
-OPENAI_API_KEY="sk-..."
-# ANTHROPIC_API_KEY="sk-ant-..."
+# LLM provider (NVIDIA NIM — primary/default)
+NVIDIA_API_KEY="nvapi-..."
 ```
 
 ### 3. Set up OKX Agentic Wallet
 
 ```bash
-bash scripts/setup_okx.sh   # auto-reads .env and configures onchainos
+bash scripts/setup_okx.sh   # auto-reads .env, writes creds to ~/.onchainos/.env
 
 # If not already logged in to the CLI wallet:
 onchainos wallet login
-# Enter your email → enter OTP code → wallet created with TEE-protected key
+# No email argument = API Key (AK) login: non-interactive, uses the
+# OKX_API_KEY / OKX_SECRET_KEY / OKX_PASSPHRASE already in ~/.onchainos/.env.
+# Wallet is created/restored automatically — no OTP, no email prompt.
 ```
 
 ### 4. Install Python dependencies
@@ -140,10 +141,11 @@ PAYLOAD=$(curl -s -X POST http://localhost:8000/analyze \
 # Step 2: Pay via OKX Agentic Wallet
 AUTH=$(onchainos payment pay --payload "$PAYLOAD" | jq -r '.authorization_header')
 
-# Step 3: Replay with auth header
+# Step 3: Replay with the returned header (onchainos returns header_name:
+# "PAYMENT-SIGNATURE" for x402 v2 — the canonical header to use here)
 curl -X POST http://localhost:8000/analyze \
   -H "Content-Type: application/json" \
-  -H "Authorization: $AUTH" \
+  -H "PAYMENT-SIGNATURE: $AUTH" \
   -d '{"proposal_url":"<url>"}'
 ```
 
