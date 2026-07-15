@@ -284,8 +284,20 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   color: var(--txt-2);
   line-height: 1.7;
   max-width: 480px;
+  margin-bottom: 1.25rem;
+}
+.hero-audience {
+  font-size: .9rem;
+  color: var(--txt-2);
+  line-height: 1.6;
+  max-width: 480px;
+  padding: .1rem 0 .1rem .85rem;
+  border-left: 2px solid transparent;
+  border-image: var(--grad);
+  border-image-slice: 1;
   margin-bottom: 2.5rem;
 }
+.hero-audience strong { color: var(--txt); font-weight: 600; }
 .hero-actions {
   display: flex;
   align-items: center;
@@ -666,6 +678,18 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 .analyze-title { font-size: 1.4rem; font-weight: 700; margin-bottom: .5rem; padding-right: 2rem; }
 .analyze-sub { font-size: .92rem; color: var(--txt-2); line-height: 1.6; margin-bottom: 1.75rem; max-width: 520px; }
 .analyze-hint { font-size: .78rem; color: var(--txt-3); margin-top: .75rem; word-break: break-all; }
+.analyze-a2mcp-note {
+  font-size: .8rem;
+  color: var(--txt-2);
+  line-height: 1.6;
+  margin-top: 1.25rem;
+  padding: .75rem 1rem;
+  background: rgba(37,99,235,.06);
+  border: 1px solid rgba(37,99,235,.2);
+  border-radius: var(--r-sm);
+}
+.analyze-a2mcp-note a { color: var(--blue-l); text-decoration: underline; text-decoration-color: rgba(59,130,246,.4); }
+.analyze-a2mcp-note a:hover { text-decoration-color: var(--blue-l); }
 
 .analyze-form { display: flex; gap: .75rem; flex-wrap: wrap; }
 .analyze-input {
@@ -881,6 +905,69 @@ button.analyze-submit { font-family: var(--ff-body); }
 .analyze-error-icon { font-size: 2rem; margin-bottom: 1rem; }
 .analyze-error-msg { font-size: 1rem; color: var(--txt); margin-bottom: .5rem; max-width: 480px; margin-left: auto; margin-right: auto; }
 .analyze-error-detail { font-size: .78rem; color: var(--txt-3); font-family: var(--ff-mono); margin-bottom: 1.5rem; word-break: break-word; }
+
+/* ═══════════════════════════════════════════════════════ */
+/* AGENT SERVICE PROVIDER (ASP)                           */
+/* ═══════════════════════════════════════════════════════ */
+.asp-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+.asp-copy p { font-size: 1.02rem; color: var(--txt-2); line-height: 1.75; margin-bottom: 1.1rem; }
+.asp-copy p:last-child { margin-bottom: 0; }
+.asp-copy strong { color: var(--txt); font-weight: 700; }
+.asp-copy code { font-family: var(--ff-mono); font-size: .88em; color: var(--blue-l); background: rgba(37,99,235,.1); padding: .1rem .35rem; border-radius: 4px; }
+.asp-term {
+  display: inline-flex;
+  align-items: center;
+  padding: .1rem .5rem;
+  border-radius: 5px;
+  background: rgba(124,58,237,.12);
+  color: var(--purple-l);
+  font-weight: 700;
+  font-size: .92em;
+}
+.asp-terminal {
+  background: var(--bg-s);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,.3);
+}
+.asp-terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .65rem .9rem;
+  background: var(--bg-e);
+  border-bottom: 1px solid var(--border);
+}
+.asp-dot { width: 9px; height: 9px; border-radius: 50%; }
+.asp-dot.r { background: #EF4444; }
+.asp-dot.a { background: #F59E0B; }
+.asp-dot.g { background: #10B981; }
+.asp-terminal-label {
+  margin-left: .4rem;
+  font-size: .68rem;
+  color: var(--txt-3);
+  letter-spacing: .02em;
+}
+.asp-terminal-body {
+  padding: 1.1rem 1.2rem;
+  font-size: .78rem;
+  line-height: 1.85;
+  color: var(--txt-2);
+  overflow-x: auto;
+  white-space: pre;
+}
+.asp-terminal-body .c-cmd  { color: var(--txt); }
+.asp-terminal-body .c-flag { color: var(--txt-3); }
+.asp-terminal-body .c-str  { color: #6EE7B7; }
+.asp-terminal-body .c-arrow{ color: var(--blue-l); }
+.asp-terminal-body .c-code { color: #FCD34D; }
+.asp-terminal-body .c-dim  { color: var(--txt-3); }
 
 /* ═══════════════════════════════════════════════════════ */
 /* HOW IT WORKS                                           */
@@ -1270,6 +1357,8 @@ button.analyze-submit { font-family: var(--ff-body); }
   .verdict-cols { grid-template-columns: 1fr; gap: 1.25rem; }
   .trace-row { flex-direction: column; gap: .3rem; }
   .trace-role { width: auto; }
+  .asp-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .asp-terminal-body { font-size: .72rem; }
 }
 </style>
 </head>
@@ -1339,6 +1428,9 @@ button.analyze-submit { font-family: var(--ff-body); }
         Summarizer, Critic, Risk Assessor, and Judge — then hands you a clear recommendation,
         a confidence score, and every piece of reasoning behind it. You decide.
         One click votes through your OKX Agentic Wallet.
+      </p>
+      <p class="hero-audience">
+        <strong>Built to be called by any agent running Onchain OS</strong> — or tried directly below if you have it installed.
       </p>
       <div class="hero-actions">
         <button type="button" class="btn-primary" id="analyzeOpenBtn" aria-expanded="false" aria-controls="analyzeApp">
@@ -1458,6 +1550,11 @@ button.analyze-submit { font-family: var(--ff-body); }
             </button>
           </form>
           <p class="analyze-hint">e.g. https://snapshot.org/#/aave.eth/proposal/0xabc123def4567890abc123def4567890abc123def4567890abc123def4567890</p>
+          <p class="analyze-a2mcp-note">
+            This calls Purposa's live A2MCP endpoint. Paying requires an OKX Agentic Wallet session —
+            if you don't have <span class="mono">onchainos</span> installed,
+            <a href="/docs">see the API docs</a> instead of trying to pay manually.
+          </p>
         </div>
 
         <!-- ── State: loading ── -->
@@ -1592,6 +1689,48 @@ button.analyze-submit { font-family: var(--ff-body); }
           </div>
         </div>
 
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- AGENT SERVICE PROVIDER (ASP)                          -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="section-sm" id="asp" aria-labelledby="asp-title">
+  <div class="container">
+    <div class="asp-grid">
+      <div class="asp-copy">
+        <p class="section-label reveal">Agent Service Provider</p>
+        <h2 class="section-title display reveal" id="asp-title" style="transition-delay:.08s">
+          Built for the agent economy
+        </h2>
+        <p class="reveal" style="transition-delay:.14s">
+          Purposa isn't just a website — it's an <span class="asp-term">Agent Service Provider (ASP)</span>
+          on OKX.AI. Any AI agent running Onchain OS can call Purposa's <code>/analyze</code> endpoint
+          directly, pay per call via x402, and get a verdict back automatically — no human in the loop
+          required.
+        </p>
+        <p class="reveal" style="transition-delay:.2s">
+          The web interface you're using now is one way to try it. The real audience is other agents
+          that need governance analysis as a callable service — <strong>this page is the demo, the API
+          is the product.</strong>
+        </p>
+      </div>
+
+      <div class="asp-terminal reveal" style="transition-delay:.26s">
+        <div class="asp-terminal-bar">
+          <span class="asp-dot r"></span><span class="asp-dot a"></span><span class="asp-dot g"></span>
+          <span class="asp-terminal-label mono">agent session · onchainos</span>
+        </div>
+        <pre class="asp-terminal-body mono"><code><span class="c-dim"># any agent, anywhere, calling Purposa directly</span>
+<span class="c-cmd">POST</span> /analyze <span class="c-flag">{"proposal_url": "..."}</span>
+<span class="c-arrow">→</span> <span class="c-code">402</span> Payment Required <span class="c-dim">(x402)</span>
+
+<span class="c-cmd">onchainos</span> payment pay <span class="c-flag">--payload</span> <span class="c-str">'&lt;challenge&gt;'</span>
+<span class="c-cmd">POST</span> /analyze <span class="c-flag">-H</span> <span class="c-str">"Authorization: &lt;signed&gt;"</span>
+
+<span class="c-arrow">→</span> <span class="c-code">200</span> <span class="c-flag">{ "recommendation": "For", "confidence": 0.82, ... }</span></code></pre>
       </div>
     </div>
   </div>
@@ -1848,6 +1987,17 @@ button.analyze-submit { font-family: var(--ff-body); }
         <div class="faq-a" id="faq7" role="region">
           <p>It's the clearest next step and the highest-priority v2 item, but there's no firm date. On-chain governance requires handling multiple contract standards (Governor Bravo, OZ Governor, etc.), gas estimation, and transaction submission — complexity that's out of scope for an MVP that needs to demonstrate the core value proposition first.</p>
           <p>Snapshot currently covers the majority of active DAO governance volume, including Uniswap, ENS, Arbitrum, and Aave — so the MVP is not a thin edge case.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" role="listitem">
+        <button class="faq-q" aria-expanded="false" aria-controls="faq8">
+          Who can use Purposa?
+          <svg class="faq-chevron" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M4 7l5 5 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="faq-a" id="faq8" role="region">
+          <p>Two ways. <strong>Any AI agent running Onchain OS</strong> can call Purposa's <code class="mono">/analyze</code> endpoint directly — hit the API, pay per call via x402 through its own OKX Agentic Wallet, and get a verdict back programmatically. This is Purposa's primary interface: it's built as an Agent Service Provider (ASP), meant to be called by other agents, not just read by humans.</p>
+          <p>A <strong>technical user without an agent</strong> can also try the full flow by hand through the panel on this page: submit a proposal URL, run <code class="mono">onchainos payment pay</code> yourself when prompted, and paste the resulting authorization value back in to continue. Either path exercises the same live endpoint — there's no separate "demo mode."</p>
         </div>
       </div>
 
