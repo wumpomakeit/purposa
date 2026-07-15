@@ -178,7 +178,11 @@ def sign_eip712_vote(
         timeout=60,
     )
 
-    sig = result.get("signature") or result.get("sig") or result.get("output", "")
+    # onchainos wraps command output as {"ok": true, "data": {"signature": "0x..."}}
+    data = result.get("data", result) if isinstance(result, dict) else {}
+    if not isinstance(data, dict):
+        data = {}
+    sig = data.get("signature") or data.get("sig") or result.get("signature") or result.get("output", "")
     if not sig:
         raise ValueError(f"No signature in onchainos output: {result}")
     return str(sig)
