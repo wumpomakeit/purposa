@@ -35,6 +35,13 @@ Without leaving your conversation context.
 
 ## Quick Start
 
+### 0. Clone the repository
+
+```bash
+git clone https://github.com/wumpomakeit/purposa.git
+cd purposa
+```
+
 ### 1. Prerequisites
 
 ```bash
