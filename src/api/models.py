@@ -103,6 +103,25 @@ class VoteResponse(BaseModel):
     signature: str
     snapshot_receipt: dict[str, Any] | None = None
     message: str
+    signed_by: str = Field(
+        default="operator_wallet",
+        description=(
+            "Who actually signed this vote. Currently always 'operator_wallet': "
+            "this deployment's onchainos CLI has a single global session, so "
+            "every /vote call signs with the operator's own OKX Agentic Wallet — "
+            "'voter_address' above is the operator's address, not the caller's. "
+            "See 'self_serve_instructions' to vote with your own wallet instead."
+        ),
+    )
+    self_serve_instructions: str = Field(
+        ...,
+        description=(
+            "How to cast this exact vote with your OWN wallet instead of relying "
+            "on the operator's. Never sends credentials to Purposa — you sign "
+            "locally with your own onchainos session (or any EIP-712-capable "
+            "wallet) and submit directly to Snapshot Hub yourself."
+        ),
+    )
 
 
 class HealthResponse(BaseModel):

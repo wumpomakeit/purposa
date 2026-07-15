@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import time
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +24,7 @@ from src.config import get_settings
 from src.payments.x402 import payment_gate
 from src.snapshot.client import fetch_proposal
 from src.wallet.okx import (
+    build_snapshot_vote_typed_data,
     get_evm_address,
     is_wallet_logged_in,
     sign_eip712_vote,
@@ -150,6 +152,15 @@ async def vote(body: VoteRequest) -> VoteResponse:
     No private key is exposed. The signature is submitted to Snapshot Hub.
 
     **This action is final — votes on Snapshot cannot be retracted.**
+
+    **Security model note (see README's "Security Model" section for full
+    detail):** unlike /analyze, this endpoint is currently single-tenant —
+    every call signs and submits using *this deployment's own* onchainos
+    session, never the calling agent/user's own wallet or voting power.
+    onchainos's CLI has no per-call auth context to do otherwise (verified,
+    not assumed). Every response's `self_serve_instructions` field gives a
+    technical caller the exact commands to sign and submit this same vote
+    with their own wallet directly against Snapshot Hub instead.
     """
     # Check wallet is connected
     if not is_wallet_logged_in():
@@ -192,14 +203,21 @@ async def vote(body: VoteRequest) -> VoteResponse:
             detail="Could not retrieve wallet address. Is the Agentic Wallet logged in?",
         )
 
-    # Sign the vote (1-indexed for Snapshot protocol)
+    # Fixed once, reused for both signing and Hub submission below — the two
+    # MUST match exactly, since Snapshot Hub recovers the signer from the
+    # full signed message (including this timestamp).
+    vote_timestamp = int(time.time())
+    snapshot_choice = body.choice_index + 1  # Snapshot uses 1-based choice
+
+    # Sign the vote
     try:
         signature = sign_eip712_vote(
             space_id=proposal.space.id,
             proposal_id=proposal.id,
-            choice=body.choice_index + 1,  # Snapshot uses 1-based choice
+            choice=snapshot_choice,
             voter_address=voter_address,
             reason=body.reason,
+            timestamp=vote_timestamp,
         )
     except Exception as e:
         log.error("vote.sign_failed", error=str(e))
@@ -211,9 +229,12 @@ async def vote(body: VoteRequest) -> VoteResponse:
 
         receipt = await submit_vote(
             proposal_id=proposal.id,
-            choice=body.choice_index + 1,
+            choice=snapshot_choice,
             from_address=voter_address,
             sig=signature,
+            space=proposal.space.id,
+            timestamp=vote_timestamp,
+            reason=body.reason,
         )
     except Exception as e:
         log.error("vote.submit_failed", error=str(e))
@@ -241,6 +262,79 @@ async def vote(body: VoteRequest) -> VoteResponse:
             f"Vote cast: {choice_label} on '{proposal.title}'. "
             "Signature submitted to Snapshot Hub."
         ),
+        signed_by="operator_wallet",
+        self_serve_instructions=_build_self_serve_vote_instructions(
+            proposal_space_id=proposal.space.id,
+            proposal_id=proposal.id,
+            choice=snapshot_choice,
+            reason=body.reason,
+            timestamp=vote_timestamp,
+        ),
+    )
+
+
+def _build_self_serve_vote_instructions(
+    proposal_space_id: str,
+    proposal_id: str,
+    choice: int,
+    reason: str,
+    timestamp: int,
+) -> str:
+    """
+    Build a ready-to-run, self-serve alternative for a caller who wants
+    their OWN wallet's voting power reflected, instead of the operator's.
+
+    This deployment's onchainos CLI exposes a single global session per
+    machine — there is no per-call auth context (no CLI flag, env var, or
+    session token scopes one command to a different account; verified
+    empirically, see README's Security Model section). So rather than
+    accepting credentials Purposa has no safe way to actually use per
+    request, this hands back the exact EIP-712 payload that was just
+    signed (minus the address) so a technical caller can sign it with
+    ANY EIP-712-capable wallet of their own and submit it directly to
+    Snapshot Hub — never sending their credentials to Purposa at all.
+    """
+    # Full typed data (incl. EIP712Domain type + primaryType) — what actually
+    # gets signed, matching sign_eip712_vote()'s CLI invocation exactly.
+    sign_payload = build_snapshot_vote_typed_data(
+        space_id=proposal_space_id,
+        proposal_id=proposal_id,
+        choice=choice,
+        voter_address="<YOUR_WALLET_ADDRESS>",
+        reason=reason,
+        timestamp=timestamp,
+    )
+    sign_payload_json = json.dumps(sign_payload)
+
+    # Hub's /api/msg "data" shape omits EIP712Domain/primaryType — matching
+    # submit_vote()'s payload exactly, so this curl example actually works.
+    hub_data = {
+        "domain": sign_payload["domain"],
+        "types": {"Vote": sign_payload["types"]["Vote"]},
+        "message": sign_payload["message"],
+    }
+    hub_body_json = json.dumps(
+        {"address": "<YOUR_WALLET_ADDRESS>", "sig": "<signature from step 2>", "data": hub_data}
+    )
+
+    return (
+        "This vote was signed and submitted using Purposa's OPERATOR wallet, "
+        "not yours — this deployment's onchainos session is single-account "
+        "per machine, so it cannot sign on a per-caller basis. To vote with "
+        "your OWN wallet and have YOUR OWN voting power reflected instead, "
+        "run this yourself (nothing here is sent to Purposa):\n\n"
+        "1) Log in to your own onchainos wallet if you haven't already:\n"
+        "   onchainos wallet login\n\n"
+        "2) Sign this exact vote payload (replace <YOUR_WALLET_ADDRESS> with "
+        "your logged-in wallet's address, both in --from and inside --message):\n"
+        f"   onchainos wallet sign-message --type eip712 --chain ethereum "
+        f"--from <YOUR_WALLET_ADDRESS> --message '{sign_payload_json}'\n\n"
+        "3) Submit the resulting signature straight to Snapshot Hub yourself "
+        "(no Purposa involvement, no API key needed):\n"
+        f"   curl -X POST https://hub.snapshot.org/api/msg -H 'Content-Type: "
+        f"application/json' -d '{hub_body_json}'\n\n"
+        "Note the timestamp above is specific to this response — request a "
+        "fresh /vote call if you wait more than a few minutes before signing."
     )
 
 

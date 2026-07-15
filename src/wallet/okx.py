@@ -8,6 +8,20 @@ Used for:
 
 The private key never leaves the TEE — we call the onchainos CLI which
 signs inside the secure enclave and returns the signature.
+
+IMPORTANT — single global session, not per-caller (verified against
+onchainos CLI v4.2.4): every function in this module operates on
+whichever account is currently logged in to *this machine's* onchainos
+session (~/.onchainos, mutated only by `wallet login` / `wallet switch`
+/ `wallet logout`). There is no CLI flag, env var, or session token that
+scopes a single command to a different account per-call — env vars like
+OKX_API_KEY are read only during `wallet login`, never on subsequent
+commands (confirmed empirically: garbage credentials passed to
+`wallet sign-message` do not affect the result; the existing on-disk
+session is used regardless). Practically, this means POST /vote always
+signs as the *operator's* wallet, never a per-request caller's wallet.
+See README.md's "Security Model" section for the full implication and
+the self-serve alternative surfaced in /vote's response.
 """
 from __future__ import annotations
 
@@ -115,23 +129,27 @@ def get_evm_address() -> str:
         return ""
 
 
-def sign_eip712_vote(
+def build_snapshot_vote_typed_data(
     space_id: str,
     proposal_id: str,
     choice: int,
     voter_address: str,
     reason: str = "Voted via Purposa",
-) -> str:
+    timestamp: int | None = None,
+) -> dict[str, Any]:
     """
-    Sign a Snapshot EIP-712 vote message using the OKX Agentic Wallet.
+    Build the EIP-712 typed data for a Snapshot Vote message.
 
-    Returns the hex signature string.
-    Snapshot EIP-712 domain + Vote type are hardcoded per Snapshot v0.1.4 spec.
+    Pulled out as its own function (rather than inlined in sign_eip712_vote)
+    so the exact same, byte-for-byte payload can also be handed back to a
+    caller who wants to sign it themselves with their own wallet — see
+    routes.vote()'s self-serve disclosure. Snapshot EIP-712 domain + Vote
+    type are hardcoded per Snapshot v0.1.4 spec.
     """
-    timestamp = int(time.time())
+    if timestamp is None:
+        timestamp = int(time.time())
 
-    # Build the EIP-712 typed data for Snapshot Vote
-    typed_data = {
+    return {
         "domain": {
             "name": "snapshot",
             "version": "0.1.4",
@@ -164,6 +182,41 @@ def sign_eip712_vote(
             "metadata": "{}",
         },
     }
+
+
+def sign_eip712_vote(
+    space_id: str,
+    proposal_id: str,
+    choice: int,
+    voter_address: str,
+    reason: str = "Voted via Purposa",
+    timestamp: int | None = None,
+) -> str:
+    """
+    Sign a Snapshot EIP-712 vote message using the OKX Agentic Wallet.
+
+    Returns the hex signature string. Signs with whichever account is
+    currently active in *this machine's* onchainos session — see the
+    module docstring note below and README's Security Model section.
+    There is no per-call auth context: onchainos's CLI only exposes a
+    single global, filesystem-scoped session (mutated via `wallet login`
+    / `wallet switch`), so this always signs as the operator's wallet,
+    never the calling API user's.
+
+    `timestamp`: pass an explicit value (rather than relying on the
+    internal default of "now") when the caller also needs the exact same
+    timestamp to submit the vote to Snapshot Hub afterward — the two must
+    match exactly, since Hub recovers the signer from the full message
+    including `timestamp`.
+    """
+    typed_data = build_snapshot_vote_typed_data(
+        space_id=space_id,
+        proposal_id=proposal_id,
+        choice=choice,
+        voter_address=voter_address,
+        reason=reason,
+        timestamp=timestamp,
+    )
 
     typed_data_json = json.dumps(typed_data)
     log.info("wallet.sign_eip712", proposal_id=proposal_id, choice=choice)
