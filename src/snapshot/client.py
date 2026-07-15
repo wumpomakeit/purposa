@@ -292,9 +292,21 @@ async def submit_vote(
     choice: int | dict,
     from_address: str,
     sig: str,
+    space: str,
+    timestamp: int,
+    reason: str = "Voted via Purposa",
     sig_type: str = "eip712",
 ) -> dict[str, Any]:
-    """Submit a vote to Snapshot Hub."""
+    """
+    Submit a vote to Snapshot Hub.
+
+    `space`, `timestamp`, and `reason` MUST exactly match the values that
+    were actually EIP-712 signed (see wallet.okx.build_snapshot_vote_typed_data) —
+    Snapshot Hub recovers the signer from this exact `data` payload, so any
+    mismatch (e.g. a different timestamp than what was signed) causes
+    signature verification to fail server-side, even though `sig` itself
+    is valid for the message it was actually computed over.
+    """
     settings = get_settings()
     payload: dict[str, Any] = {
         "address": from_address,
@@ -314,10 +326,12 @@ async def submit_vote(
                 ]
             },
             "message": {
-                "space": "",
+                "from": from_address,
+                "space": space,
+                "timestamp": timestamp,
                 "proposal": proposal_id,
                 "choice": choice,
-                "reason": "Voted via Purposa",
+                "reason": reason,
                 "app": "purposa",
                 "metadata": "{}",
             },
